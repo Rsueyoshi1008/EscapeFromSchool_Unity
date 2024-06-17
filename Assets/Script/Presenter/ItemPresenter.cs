@@ -23,7 +23,7 @@ namespace MVRP.Items.Presenter
             _playerView._itemSearchFunction = _itemManager.ItemSearch;
             _itemManager.releaseEscape = _doorController.ReleaseEscape;
             _itemSpawn._getItemObject = _itemManager.GetItemObject;
-            
+            //_itemManager.onRevealEvent = 
         }
     }
 }

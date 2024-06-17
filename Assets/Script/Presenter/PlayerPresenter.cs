@@ -40,7 +40,7 @@ namespace MVRP.Player.Presenter
             _playerModel.GetItemName.Subscribe(x => {_itemManager.GetName((string)x);}).AddTo(this);
             
             _playerModel.reCameraEvent = _cameraControl.ReleaseCameraLock;
-            _playerModel.reItemSpawnEvent = _itemSpawn.SpawnItemIfNameExists;
+            _playerModel.reItemSpawnEvent = _itemSpawn.UpdateItemPosition;
             _playerModel.itemRawImageEvent = _playerView.SetRawImage;
             
             //  マウスセンシ設定値の監視

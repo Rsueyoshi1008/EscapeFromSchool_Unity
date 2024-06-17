@@ -8,12 +8,17 @@ namespace MVRP.Item.Models
     {
         // アイテムごとのスポーンポイントを管理する辞書
         private Dictionary<string, List<Transform>> itemSpawnPoints = new Dictionary<string, List<Transform>>();
+        private Dictionary<string, GameObject> spawnedItems = new Dictionary<string, GameObject>();
         //  取得するアイテム名
         [SerializeField] private List<string> spawnItemObjectName = new List<string>();
         // アイテムごとのスポーンポイントフォルダ
         [SerializeField] private List<GameObject> spawnPointParentObjects;
         //  アイテムオブジェクトを格納
         private List<GameObject> prefabObject;
+        //  設定したポジションを格納
+        private List<Transform> spawnEscapePoints;
+        //  一個前の乱数を保持してる
+        int tmpPreviousRandom = -1;
         //  生成したオブジェクトの管理オブジェクト
         [SerializeField] private GameObject spawnItemObjectManager;
         //  イベント
@@ -81,10 +86,10 @@ namespace MVRP.Item.Models
                             {
                                 Transform child = parentObject.transform.GetChild(j);
                                 itemSpawnPoints[itemName].Add(child);
-                                Debug.Log("child  /  " + child.position);
+                                
                             }
 
-                            Debug.Log("アイテム " + itemName + " / " + itemSpawnPoints[itemName].Count + " 追加");
+                            
                         }
                         else
                         {
@@ -118,7 +123,7 @@ namespace MVRP.Item.Models
                 return new List<Transform>();
             }
         }
-        public void SpawnItemIfNameExists(string itemName)
+        private void SpawnItemIfNameExists(string itemName)
         {
             bool isSpawn = false;
             foreach (GameObject item in prefabObject)//  アイテムがあるかの確認
@@ -130,37 +135,26 @@ namespace MVRP.Item.Models
             }
             if(isSpawn == true)//   該当するアイテムが存在したときに動く
             {
-                ResetItemPosition(itemName);
-                Debug.Log("アイテム生成中");
-                GameObject escapeItem = null;
-                int tmpPreviousRandom = -1;
+                GameObject itemToSpawn = null;
                 foreach (GameObject item in prefabObject)//  脱出用のアイテムオブジェクト取得
                 {
                     if (item.name == itemName)
                     {
-                        escapeItem = item;
+                        itemToSpawn = item;
                         tmpPreviousRandom = previousRandom;
                     }
                 }
 
-                List<Transform> spawnEscapePoints = GetSpawnPoints(itemName);
-                Debug.Log(spawnEscapePoints[0].position);
+                spawnEscapePoints = GetSpawnPoints(itemName);
                 if (spawnEscapePoints.Count == 0)// 生成地点がなかった場合何もしない
                 {
                     return;
                 }
                 else
                 {
-                    int random = RandomPosition(spawnEscapePoints.Count,tmpPreviousRandom);
-                    tmpPreviousRandom = random;
-                    Vector3 spawnPosition = spawnEscapePoints[random].position;// 生成場所の取得
-                    Quaternion spawnRotation = escapeItem.gameObject.transform.rotation;//  プレハブのものを参照
-                    GameObject newObject = Instantiate(escapeItem, spawnPosition, spawnRotation,spawnItemObjectManager.transform);//    parentObjectを親としてオブジェクトを生成
-                    //  位置の初期化
-                    newObject.transform.position = spawnPosition;
-                    newObject.transform.rotation = spawnRotation;
-                    Debug.Log("アイテム生成完了  /" + "spawnPosition  = " + spawnEscapePoints[0].position + "  /ItemName " +itemName);
-                    Debug.Log("Random " + random);
+                    // 新しいアイテムを生成
+                    GameObject newItem = SpawnNewItem(itemToSpawn, itemName);
+                    spawnedItems[itemName] = newItem; // 生成したアイテムを記録
                 }
                 foreach (GameObject item in prefabObject)// 乱数の記録
                 {
@@ -174,6 +168,24 @@ namespace MVRP.Item.Models
             {
                 Debug.Log("not found item  =" + itemName);
             }
+        }
+        //  スポーン地点をランダムに選んでそこに移動する
+        public void UpdateItemPosition(string itemName)
+        {
+            
+            List<Transform> spawnPoints = GetSpawnPoints(itemName);
+            int randomIndex = RandomPosition(spawnEscapePoints.Count,tmpPreviousRandom);
+            Vector3 newSpawnPosition = spawnPoints[randomIndex].position;
+            spawnedItems[itemName].transform.position = newSpawnPosition; // 位置を更新
+        }
+        private GameObject SpawnNewItem(GameObject item, string itemName)
+        {
+            List<Transform> spawnPoints = GetSpawnPoints(itemName);
+            int randomIndex = RandomPosition(spawnEscapePoints.Count,tmpPreviousRandom);
+            Vector3 spawnPosition = spawnPoints[randomIndex].position;
+            Quaternion spawnRotation = item.transform.rotation;
+            GameObject newItem = Instantiate(item, spawnPosition, spawnRotation, spawnItemObjectManager.transform);
+            return newItem;
         }
         
         private int RandomPosition(int range, int previousRandom)

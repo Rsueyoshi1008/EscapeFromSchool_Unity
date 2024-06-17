@@ -8,10 +8,10 @@ namespace MVRP.Item.Managers
     public class ItemManager : MonoBehaviour
     {
         private ItemDataBase itemDataBase;
-        [SerializeField] private ItemSpawn _itemSpawn;
         
         public UnityAction<string,Sprite> _viewItem;
         public UnityAction releaseEscape;
+        public UnityAction onRevealEvent;
         
         private string getItemName;
         
@@ -31,7 +31,6 @@ namespace MVRP.Item.Managers
             }
             //  PlayerViewのテキストを初期化
             _viewItem?.Invoke("",null);
-            //_itemSpawn.EscapeItemSpawn();
         }
         void Start()
         {
@@ -49,21 +48,23 @@ namespace MVRP.Item.Managers
             {
                 releaseEscape?.Invoke();
             }
+            if(getItemName == "TransparencyItem")
+            {
+                onRevealEvent?.Invoke();
+            }
             foreach(MainItem status in itemDataBase.items)//    取得したアイテムの情報の情報
             {
                 if(status.objectName != "")//   空欄じゃなかったら
                 {
-                    if(status.objectName == getItemName)
+                    if(status.objectName == getItemName)//    PlayerViewにアイテム名の表示
                     {
-                        _viewItem?.Invoke(status.itemName,status.itemImage);//    PlayerViewにアイテム名の表示
+                        _viewItem?.Invoke(status.itemName,status.itemImage);
                         getItemName = "null";
                         
                     }
                     
                 }
             }
-            
-            
         }
         public void GetName(string _itemName)//Playerが獲得したアイテムの名前を取得
         {
