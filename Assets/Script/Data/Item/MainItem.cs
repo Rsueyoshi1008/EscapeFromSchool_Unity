@@ -11,5 +11,6 @@ public class MainItem : ScriptableObject
     public Sprite itemImage; //アイテムの画像
     public bool unlock; //アイテムの開放条件
     public GameObject gameObject;   //アイテムの本体
+    public float effectiveTime; //アイテムの効果時間
     public int previousRandom;  //同じ場所にアイテムを生成しないために乱数を記録する
 }

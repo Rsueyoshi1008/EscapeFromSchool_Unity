@@ -50,9 +50,7 @@ namespace MVRP.TutorialsPopup.Views
                 if(isTutorialSentenceEnd == true)
                 {
                     HideUI();
-                    inGameObject.SetActive(true);
-                    unLockPlayerMovementEvent?.Invoke();
-                    staminaSnyc?.Invoke();
+                    InGameViewIndication();
                 }
                 
             }
@@ -81,6 +79,12 @@ namespace MVRP.TutorialsPopup.Views
                 SetText(tutorialSentence[buttonClickCount]);
             }
             else return;
+        }
+        private void InGameViewIndication()
+        {
+            inGameObject.SetActive(true);
+            unLockPlayerMovementEvent?.Invoke();
+            staminaSnyc?.Invoke();
         }
         public void SetText(string t)
         {

@@ -17,3 +17,5 @@ MonoBehaviour:
   itemImage: {fileID: 21300000, guid: 55a98110fb754e74c8e9bd281fb6ffa6, type: 3}
   unlock: 0
   gameObject: {fileID: 197236, guid: 4fc855fb7bf094a0891967175e5bdb17, type: 3}
+  effectiveTime: 10
+  previousRandom: 0

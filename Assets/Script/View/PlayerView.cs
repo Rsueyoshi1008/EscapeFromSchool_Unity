@@ -18,14 +18,14 @@ namespace MVRP.Player.Views
         //  スライダー
         [SerializeField] private Slider staminaSlider;
         //  アイテム周りを写すテクスチャ
-        [SerializeField] private RawImage itemRawImage;
+        [SerializeField] private RawImage cameraRawImage;
         //  オーディオ
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private AudioClip clickSound;
         public Func<string, string> _itemSearchFunction;
         public void Initialize()
         {
-            itemRawImage.gameObject.SetActive(true);
+            cameraRawImage.gameObject.SetActive(false);
         }
         void Start()
         {
@@ -48,17 +48,12 @@ namespace MVRP.Player.Views
 
             // テキストを非表示にする
             _itemText.gameObject.SetActive(false);
-            
+            _itemSprite.gameObject.SetActive(false);
         }
 
         // Update is called once per frame
         void Update()
         {
-            if(_itemSprite.sprite != null)//    何かしらの画像が入っていたら表示
-            {
-                _itemSprite.gameObject.SetActive(true);
-            }
-            else _itemSprite.gameObject.SetActive(false);
             
         }
         public void OnButtonClick()
@@ -81,6 +76,7 @@ namespace MVRP.Player.Views
                 return;
             }
             _itemText.gameObject.SetActive(true);
+            _itemSprite.gameObject.SetActive(true);
             //Textではなく取得したアイテムの画像を表示するように変更する
             _itemText.text = t;
             _itemSprite.sprite = image;
@@ -88,9 +84,9 @@ namespace MVRP.Player.Views
             StartCoroutine(HideTextAfterDelay(4f));
             
         }
-        public void SetRawImage()
+        public void SetCameraRawImage(bool isView)
         {
-            itemRawImage.gameObject.SetActive(false);
+            cameraRawImage.gameObject.SetActive(isView);
         }
         public void ToggleEventTextVisibility(bool isVisible)
         {
@@ -105,6 +101,7 @@ namespace MVRP.Player.Views
         {
             
             _itemText.gameObject.SetActive(false);
+            _itemSprite.gameObject.SetActive(false);
             //  レティクルだけ逆の処理をする
             _reticleSprite.gameObject.SetActive(true);
             
@@ -112,6 +109,11 @@ namespace MVRP.Player.Views
         //  表示    //
         public void IndicationUI()
         {
+            if(_itemSprite.sprite != null)//    画像があるときのみアイテムを表示
+            {
+                _itemSprite.gameObject.SetActive(true);
+            }
+            
             //  レティクルだけ逆の処理をする
             _reticleSprite.gameObject.SetActive(false);
         }

@@ -1,20 +1,29 @@
+using System.Collections;
 using System.Collections.Generic;
-using MVRP.Items.Models;
-using MVRP.Item.Models;
 using UnityEngine;
 using UnityEngine.Events;
 namespace MVRP.Item.Managers
 {
     public class ItemManager : MonoBehaviour
     {
+        // アイテムごとのスポーンポイントを管理する辞書
+        private Dictionary<string,float> itemsEffectiveTime = new Dictionary<string, float>();
         private ItemDataBase itemDataBase;
-        
+        //  イベント
         public UnityAction<string,Sprite> _viewItem;
         public UnityAction releaseEscape;
-        public UnityAction onRevealEvent;
+        public UnityAction<int,float> onRevealEvent;
+        public UnityAction<bool> viewEscapeKey;
+        public UnityAction<string> spawnItem;
         
         private string getItemName;
-        
+        // コルーチンの定義
+        private IEnumerator GetItemObjectAfterDelay(float delay)
+        {
+            // 指定された秒数待機
+            yield return new WaitForSeconds(delay);
+            viewEscapeKey?.Invoke(false);
+        }
         public void Initialize()
         {
             itemDataBase = Resources.Load<ItemDataBase>("DataBase/ItemDataBase");
@@ -39,6 +48,15 @@ namespace MVRP.Item.Managers
             {
                 itemDataBase = Resources.Load<ItemDataBase>("DataBase/ItemDataBase");
             }
+            foreach(MainItem status in itemDataBase.items)//    取得したアイテムの情報の情報
+            {
+                // アイテムの効果時間を初期化
+                if (!itemsEffectiveTime.ContainsKey(status.itemName))
+                {
+                    itemsEffectiveTime[status.objectName] = status.effectiveTime;
+                }
+
+            }
         }
         //階段扉のDoorControllerを取得し、鍵を獲得したらその階のDoorControllerをActiveにする
         void Update()
@@ -50,7 +68,13 @@ namespace MVRP.Item.Managers
             }
             if(getItemName == "TransparencyItem")
             {
-                onRevealEvent?.Invoke();
+                if(itemsEffectiveTime.ContainsKey("TransparencyItem"))
+                {
+                    onRevealEvent?.Invoke(1,itemsEffectiveTime["TransparencyItem"]);
+                    viewEscapeKey?.Invoke(true);
+                    spawnItem?.Invoke("TransparencyItem");
+                    StartCoroutine(GetItemObjectAfterDelay(itemsEffectiveTime["TransparencyItem"]));
+                }
             }
             foreach(MainItem status in itemDataBase.items)//    取得したアイテムの情報の情報
             {

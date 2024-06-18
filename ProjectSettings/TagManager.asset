@@ -12,6 +12,7 @@ TagManager:
   - EscapeKey
   - Clear
   - Item
+  - Stair
   layers:
   - Default
   - TransparentFX

@@ -86,7 +86,6 @@ namespace MVRP.Item.Models
                             {
                                 Transform child = parentObject.transform.GetChild(j);
                                 itemSpawnPoints[itemName].Add(child);
-                                
                             }
 
                             
@@ -123,7 +122,7 @@ namespace MVRP.Item.Models
                 return new List<Transform>();
             }
         }
-        private void SpawnItemIfNameExists(string itemName)
+        public void SpawnItemIfNameExists(string itemName)
         {
             bool isSpawn = false;
             foreach (GameObject item in prefabObject)//  アイテムがあるかの確認

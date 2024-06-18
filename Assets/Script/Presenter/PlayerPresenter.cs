@@ -6,10 +6,8 @@ using MVRP.Setting.Views;
 using MVRP.Item.Managers;
 using MVRP.RayCast.Models;
 using MVRP.Item.Models;
-using MVRP.TutorialsPopup.Views;
 using MVRP.Game.managers;
 using UniRx;
-using MVRP.Doors.Models;
 namespace MVRP.Player.Presenter
 {
     public sealed class PlayerPresenter : MonoBehaviour
@@ -41,7 +39,8 @@ namespace MVRP.Player.Presenter
             
             _playerModel.reCameraEvent = _cameraControl.ReleaseCameraLock;
             _playerModel.reItemSpawnEvent = _itemSpawn.UpdateItemPosition;
-            _playerModel.itemRawImageEvent = _playerView.SetRawImage;
+            
+            //_playerModel.cameraRawImageEvent = _playerView.SetCameraRawImage;
             
             //  マウスセンシ設定値の監視
             _settingView.Sensitivity.Subscribe(x => {_cameraControl.SyncMouseSensitivity((float)x);}).AddTo(this);
@@ -56,7 +55,6 @@ namespace MVRP.Player.Presenter
             _rayCastManager.managerRayCast_Name += _playerModel.GetRayCastObjectName;
             //  シーン遷移
             _playerModel.changeScene = _gameManager.ChangeScene;
-            
         }
     }
 }
