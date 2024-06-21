@@ -3,9 +3,6 @@ using UniRx;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using MVRP.Doors.Models;
-using Unity.VisualScripting;
-using System.Collections;
-using System.Security.Cryptography;
 namespace MVRP.Player.Models
 {
 
@@ -159,6 +156,7 @@ namespace MVRP.Player.Models
             }
 
             //  Test用のイベント
+            
             if(Input.GetKeyDown(KeyCode.F))
             {
                 
@@ -166,11 +164,9 @@ namespace MVRP.Player.Models
                 Cursor.visible = true;
                 testChangeScene?.Invoke("Clear");
                 
-                Debug.Log(transform.position);
-                getItemAudioSource.Play();
-                Debug.Log("PlaySound");
+                //_getItemName.Value = "PerfectItem";
             }
-
+            
 
             if (isDownDash == false)
             {
@@ -494,7 +490,7 @@ namespace MVRP.Player.Models
                 eventKey?.Invoke(false);
             }
         }
-
+        
     }
 }
 

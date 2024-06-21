@@ -26,11 +26,19 @@ namespace MVRP.Items.Presenter
             _playerView._itemSearchFunction = _itemManager.ItemSearch;
             _itemManager.releaseEscape = _doorController.ReleaseEscape;
             _itemSpawn._getItemObject = _itemManager.GetItemObject;
+            _itemSpawn._getIsSpawn = _itemManager.GetIsSpawn;
+            _itemSpawn._setIsSpawn = _itemManager.SetIsSpawn;
             //  敵が透けるアイテム効果
             _itemManager.onRevealEvent = _cameraControl.SetURPData;
+            _itemManager.ViewEffectiveTime += HandleViewEffectiveTime;
             //  脱出鍵の周りが見える効果
             _itemManager.viewEscapeKey = _playerView.SetCameraRawImage;
             _itemManager.spawnItem = _itemSpawn.SpawnItemIfNameExists;
+        }
+        // コルーチンを開始するためのハンドラーメソッド
+        private void HandleViewEffectiveTime(float time)
+        {
+            StartCoroutine(_playerView.GetEffectiveTime(time));
         }
     }
 }

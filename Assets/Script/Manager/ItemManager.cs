@@ -15,6 +15,7 @@ namespace MVRP.Item.Managers
         public UnityAction<int,float> onRevealEvent;
         public UnityAction<bool> viewEscapeKey;
         public UnityAction<string> spawnItem;
+        public UnityAction<float> ViewEffectiveTime;
         
         private string getItemName;
         // コルーチンの定義
@@ -40,14 +41,10 @@ namespace MVRP.Item.Managers
             }
             //  PlayerViewのテキストを初期化
             _viewItem?.Invoke("",null);
+            onRevealEvent?.Invoke(1,0);//   敵が透ける効果をリセット
         }
         void Start()
         {
-            //  テスト用
-            if(itemDataBase == null)
-            {
-                itemDataBase = Resources.Load<ItemDataBase>("DataBase/ItemDataBase");
-            }
             foreach(MainItem status in itemDataBase.items)//    取得したアイテムの情報の情報
             {
                 // アイテムの効果時間を初期化
@@ -71,10 +68,18 @@ namespace MVRP.Item.Managers
                 if(itemsEffectiveTime.ContainsKey("TransparencyItem"))
                 {
                     onRevealEvent?.Invoke(1,itemsEffectiveTime["TransparencyItem"]);
+                    ViewEffectiveTime?.Invoke(itemsEffectiveTime["TransparencyItem"]);
                     viewEscapeKey?.Invoke(true);
                     spawnItem?.Invoke("TransparencyItem");
                     StartCoroutine(GetItemObjectAfterDelay(itemsEffectiveTime["TransparencyItem"]));
                 }
+            }
+            if(getItemName == "PerfectItem")
+            {
+                onRevealEvent?.Invoke(1,itemsEffectiveTime["PerfectItem"]);
+                ViewEffectiveTime?.Invoke(itemsEffectiveTime["PerfectItem"]);
+                viewEscapeKey?.Invoke(true);
+                StartCoroutine(GetItemObjectAfterDelay(itemsEffectiveTime["PerfectItem"]));
             }
             foreach(MainItem status in itemDataBase.items)//    取得したアイテムの情報の情報
             {
@@ -83,8 +88,38 @@ namespace MVRP.Item.Managers
                     if(status.objectName == getItemName)//    PlayerViewにアイテム名の表示
                     {
                         _viewItem?.Invoke(status.itemName,status.itemImage);
+                        status.isSpawn = false;
                         getItemName = "null";
                         
+                    }
+                    
+                }
+            }
+        }
+        public bool GetIsSpawn(string itemName)
+        {
+            foreach(MainItem status in itemDataBase.items)//    取得したアイテムの情報の情報
+            {
+                if(status.objectName != "")//   空欄じゃなかったら
+                {
+                    if(status.objectName == itemName)//    PlayerViewにアイテム名の表示
+                    {
+                        return status.isSpawn;
+                    }
+                    
+                }
+            }
+            return true;
+        }
+        public void SetIsSpawn(string itemName)
+        {
+            foreach(MainItem status in itemDataBase.items)//    取得したアイテムの情報の情報
+            {
+                if(status.objectName != "")//   空欄じゃなかったら
+                {
+                    if(status.objectName == itemName)
+                    {
+                        status.isSpawn = true;
                     }
                     
                 }

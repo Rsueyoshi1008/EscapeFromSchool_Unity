@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 namespace MVRP.Item.Models
 {
     public class ItemSpawn : MonoBehaviour
@@ -9,6 +10,7 @@ namespace MVRP.Item.Models
         // アイテムごとのスポーンポイントを管理する辞書
         private Dictionary<string, List<Transform>> itemSpawnPoints = new Dictionary<string, List<Transform>>();
         private Dictionary<string, GameObject> spawnedItems = new Dictionary<string, GameObject>();
+        private Dictionary<string, bool> isSpawn = new Dictionary<string, bool>();
         //  取得するアイテム名
         [SerializeField] private List<string> spawnItemObjectName = new List<string>();
         // アイテムごとのスポーンポイントフォルダ
@@ -23,6 +25,8 @@ namespace MVRP.Item.Models
         [SerializeField] private GameObject spawnItemObjectManager;
         //  イベント
         public Func<List<string>, List<GameObject>> _getItemObject;
+        public Func<string, bool> _getIsSpawn;
+        public UnityAction<string> _setIsSpawn;
         private bool itemSpawned = false;
         private int previousRandom = -1;
         // コルーチンの定義
@@ -35,6 +39,15 @@ namespace MVRP.Item.Models
         public void Initialize()
         {
             itemSpawned = false;
+            // それぞれのアイテム名ごとに初期化
+            foreach (var itemName in spawnItemObjectName)
+            {
+                // スポーンポイントリストを初期化
+                if (!isSpawn.ContainsKey(itemName))
+                {
+                    isSpawn[itemName] = true;
+                }
+            }
         }
         void Start()
         {
@@ -51,6 +64,7 @@ namespace MVRP.Item.Models
                 //  アイテムの生成
                 SpawnItemIfNameExists("EscapeKey");
                 SpawnItemIfNameExists("TransparencyItem");
+                SpawnItemIfNameExists("PerfectItem");
                 itemSpawned = true;
             }
             
@@ -112,6 +126,7 @@ namespace MVRP.Item.Models
         // 指定したアイテムのスポーンポイントを取得
         public List<Transform> GetSpawnPoints(string itemName)
         {
+            Debug.Log(itemName);
             if (itemSpawnPoints.ContainsKey(itemName))
             {
                 return itemSpawnPoints[itemName];
@@ -125,6 +140,11 @@ namespace MVRP.Item.Models
         public void SpawnItemIfNameExists(string itemName)
         {
             bool isSpawn = false;
+            bool spawn = _getIsSpawn?.Invoke(itemName) ?? false;
+            if(spawn == true)
+            {
+                return;
+            }
             foreach (GameObject item in prefabObject)//  アイテムがあるかの確認
             {
                 if (item.name == itemName)
@@ -144,7 +164,7 @@ namespace MVRP.Item.Models
                     }
                 }
 
-                spawnEscapePoints = GetSpawnPoints(itemName);
+                spawnEscapePoints = GetSpawnPoints(itemName);// 生成位置の取得
                 if (spawnEscapePoints.Count == 0)// 生成地点がなかった場合何もしない
                 {
                     return;
@@ -152,7 +172,7 @@ namespace MVRP.Item.Models
                 else
                 {
                     // 新しいアイテムを生成
-                    GameObject newItem = SpawnNewItem(itemToSpawn, itemName);
+                    GameObject newItem = SpawnNewItem(itemToSpawn,itemName);
                     spawnedItems[itemName] = newItem; // 生成したアイテムを記録
                 }
                 foreach (GameObject item in prefabObject)// 乱数の記録
@@ -162,6 +182,7 @@ namespace MVRP.Item.Models
                         previousRandom = tmpPreviousRandom;
                     }
                 }
+                _setIsSpawn?.Invoke(itemName);
             }
             else
             {
@@ -171,8 +192,7 @@ namespace MVRP.Item.Models
         //  スポーン地点をランダムに選んでそこに移動する
         public void UpdateItemPosition(string itemName)
         {
-            
-            List<Transform> spawnPoints = GetSpawnPoints(itemName);
+            List<Transform> spawnPoints = GetSpawnPoints(itemName); 
             int randomIndex = RandomPosition(spawnEscapePoints.Count,tmpPreviousRandom);
             Vector3 newSpawnPosition = spawnPoints[randomIndex].position;
             spawnedItems[itemName].transform.position = newSpawnPosition; // 位置を更新
@@ -195,16 +215,6 @@ namespace MVRP.Item.Models
                 random = UnityEngine.Random.Range(0, range); //  二回目以降のアイテム生成で同じ場所に生成されないようにしてる
             } while (random == previousRandom);
             return random;
-        }
-        //  指定したアイテムの位置を移動させる
-        private void ResetItemPosition(string itemName)
-        {
-            List<Transform> spawnEscapePoints = GetSpawnPoints(itemName);
-            // 脱出アイテムを削除
-            foreach (Transform child in spawnEscapePoints)
-            {
-                child.position = new Vector3(0f,0f,0f);
-            }
         }
     }
 }

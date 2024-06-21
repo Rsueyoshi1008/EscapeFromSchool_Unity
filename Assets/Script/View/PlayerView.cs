@@ -9,7 +9,7 @@ namespace MVRP.Player.Views
         //  テキスト
         [SerializeField] private Text _itemText;
         [SerializeField] private Text _eventText;
-        
+        [SerializeField] private Text _effectiveTimeText;
         //  ボタン
         [SerializeField] private Button _itemCheckButton;
         //  画像
@@ -31,6 +31,7 @@ namespace MVRP.Player.Views
         {
             _itemText.gameObject.SetActive(false);
             _eventText.gameObject.SetActive(false);
+            _effectiveTimeText.gameObject.SetActive(false);
             staminaSlider.onValueChanged.AddListener(delegate { OnSliderValueChanged(staminaSlider.value); });
             _itemCheckButton.onClick.AddListener(OnButtonClick);
         }
@@ -83,6 +84,20 @@ namespace MVRP.Player.Views
             // 4秒後にテキストを非表示にするコルーチンを開始
             StartCoroutine(HideTextAfterDelay(4f));
             
+        }
+        public IEnumerator GetEffectiveTime(float duration)
+        {
+            _effectiveTimeText.gameObject.SetActive(true);
+            float remainingTime = duration;
+
+            while (remainingTime > 0)
+            {
+                remainingTime -= Time.deltaTime;
+                _effectiveTimeText.text = "アイテムの効果時間 " + Mathf.Max(0, remainingTime).ToString("F2"); // 小数点以       下2桁で表示
+                yield return null; // 次のフレームまで待機
+            }
+
+            _effectiveTimeText.gameObject.SetActive(false);
         }
         public void SetCameraRawImage(bool isView)
         {

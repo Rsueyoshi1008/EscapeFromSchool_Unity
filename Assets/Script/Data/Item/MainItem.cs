@@ -13,4 +13,5 @@ public class MainItem : ScriptableObject
     public GameObject gameObject;   //アイテムの本体
     public float effectiveTime; //アイテムの効果時間
     public int previousRandom;  //同じ場所にアイテムを生成しないために乱数を記録する
+    public bool isSpawn;    //アイテムが生成されているかを保持
 }

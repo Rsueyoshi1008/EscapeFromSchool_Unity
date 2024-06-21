@@ -19,3 +19,4 @@ MonoBehaviour:
   gameObject: {fileID: 197236, guid: 4fc855fb7bf094a0891967175e5bdb17, type: 3}
   effectiveTime: 10
   previousRandom: 0
+  isSpawn: 0
