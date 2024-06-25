@@ -17,24 +17,23 @@ namespace MVRP.Item.Models
         [SerializeField] private List<GameObject> spawnPointParentObjects;
         //  アイテムオブジェクトを格納
         private List<GameObject> prefabObject;
-        //  設定したポジションを格納
-        private List<Transform> spawnEscapePoints;
-        //  一個前の乱数を保持してる
-        int tmpPreviousRandom = -1;
         //  生成したオブジェクトの管理オブジェクト
         [SerializeField] private GameObject spawnItemObjectManager;
         //  イベント
-        public Func<List<string>, List<GameObject>> _getItemObject;
-        public Func<string, bool> _getIsSpawn;
-        public UnityAction<string> _setIsSpawn;
+        public Func<List<string>, List<GameObject>> getItemObject;
+        public Func<string, bool> getIsSpawn;
+        public Func<string, int> getPreviousRandom;
+        public Func<string, Vector2> getMaxSpawnCountAndSpawnCount;
+        public UnityAction<string, int> setPreviousRandom;
+        public UnityAction<string> setIsSpawn;
+        public UnityAction<string,int> setSpawnCount;
         private bool itemSpawned = false;
-        private int previousRandom = -1;
         // コルーチンの定義
         private IEnumerator GetItemObjectAfterDelay(float delay)
         {
             // 指定された秒数待機
             yield return new WaitForSeconds(delay);
-            prefabObject = _getItemObject?.Invoke(spawnItemObjectName);
+            prefabObject = getItemObject?.Invoke(spawnItemObjectName);
         }
         public void Initialize()
         {
@@ -126,7 +125,6 @@ namespace MVRP.Item.Models
         // 指定したアイテムのスポーンポイントを取得
         public List<Transform> GetSpawnPoints(string itemName)
         {
-            Debug.Log(itemName);
             if (itemSpawnPoints.ContainsKey(itemName))
             {
                 return itemSpawnPoints[itemName];
@@ -137,22 +135,14 @@ namespace MVRP.Item.Models
                 return new List<Transform>();
             }
         }
+        
         public void SpawnItemIfNameExists(string itemName)
         {
-            bool isSpawn = false;
-            bool spawn = _getIsSpawn?.Invoke(itemName) ?? false;
-            if(spawn == true)
-            {
-                return;
-            }
-            foreach (GameObject item in prefabObject)//  アイテムがあるかの確認
-            {
-                if (item.name == itemName)
-                {
-                    isSpawn = true;
-                }
-            }
-            if(isSpawn == true)//   該当するアイテムが存在したときに動く
+            Vector2 maxSpawnCountAndSpawnCount = getMaxSpawnCountAndSpawnCount?.Invoke(itemName) ?? new Vector2 (0,0);
+            float max = maxSpawnCountAndSpawnCount.x;
+            //   アイテムが生成可能かを確認する
+            //   可能な時はtrueを返す
+            if(CheckItemSpawnEligibility(itemName))
             {
                 GameObject itemToSpawn = null;
                 foreach (GameObject item in prefabObject)//  脱出用のアイテムオブジェクト取得
@@ -160,55 +150,76 @@ namespace MVRP.Item.Models
                     if (item.name == itemName)
                     {
                         itemToSpawn = item;
-                        tmpPreviousRandom = previousRandom;
                     }
                 }
 
-                spawnEscapePoints = GetSpawnPoints(itemName);// 生成位置の取得
+                List<Transform> spawnEscapePoints = GetSpawnPoints(itemName);// 生成位置の取得
                 if (spawnEscapePoints.Count == 0)// 生成地点がなかった場合何もしない
                 {
                     return;
                 }
                 else
                 {
-                    // 新しいアイテムを生成
-                    GameObject newItem = SpawnNewItem(itemToSpawn,itemName);
-                    spawnedItems[itemName] = newItem; // 生成したアイテムを記録
-                }
-                foreach (GameObject item in prefabObject)// 乱数の記録
-                {
-                    if (item.name == itemName)
+                    for(int i = 0; i < max; i++)//  生成上限までアイテムを生成する
                     {
-                        previousRandom = tmpPreviousRandom;
+                        // 新しいアイテムを生成
+                        GameObject newItem = SpawnNewItem(itemToSpawn,itemName);
+                        spawnedItems[itemName] = newItem;// 生成したアイテムを記録
                     }
                 }
-                _setIsSpawn?.Invoke(itemName);
+                setIsSpawn?.Invoke(itemName);
             }
-            else
-            {
-                Debug.Log("not found item  =" + itemName);
-            }
+            
         }
         //  スポーン地点をランダムに選んでそこに移動する
         public void UpdateItemPosition(string itemName)
         {
-            List<Transform> spawnPoints = GetSpawnPoints(itemName); 
-            int randomIndex = RandomPosition(spawnEscapePoints.Count,tmpPreviousRandom);
+            Debug.Log("UpdatePosition");
+            int tmpPreviousRandom = getPreviousRandom?.Invoke(itemName) ?? -1;
+            List<Transform> spawnPoints = GetSpawnPoints(itemName);
+            int randomIndex = RandomPosition(spawnPoints.Count,tmpPreviousRandom);
             Vector3 newSpawnPosition = spawnPoints[randomIndex].position;
             spawnedItems[itemName].transform.position = newSpawnPosition; // 位置を更新
+            setPreviousRandom?.Invoke(itemName, randomIndex);//   乱数の記録
         }
         private GameObject SpawnNewItem(GameObject item, string itemName)
         {
+            int tmpPreviousRandom = getPreviousRandom?.Invoke(itemName) ?? -1;
             List<Transform> spawnPoints = GetSpawnPoints(itemName);
-            int randomIndex = RandomPosition(spawnEscapePoints.Count,tmpPreviousRandom);
+            int randomIndex = RandomPosition(spawnPoints.Count,tmpPreviousRandom);
             Vector3 spawnPosition = spawnPoints[randomIndex].position;
             Quaternion spawnRotation = item.transform.rotation;
             GameObject newItem = Instantiate(item, spawnPosition, spawnRotation, spawnItemObjectManager.transform);
+            setPreviousRandom?.Invoke(itemName, randomIndex);//   乱数の記録
+            setSpawnCount?.Invoke(itemName, 1);//  生成した数を追加
             return newItem;
         }
-        
+        private bool CheckItemSpawnEligibility(string itemName)
+        {
+            //  生成可能数と生成した数を同時取得
+            Vector2 maxSpawnCountAndSpawnCount = getMaxSpawnCountAndSpawnCount?.Invoke(itemName) ?? new Vector2 (0,0);
+            float maxSpawn = maxSpawnCountAndSpawnCount.x;
+            float spawnCount = maxSpawnCountAndSpawnCount.y;
+            bool isSpawn = false;
+            bool spawn = getIsSpawn?.Invoke(itemName) ?? false;
+            foreach (GameObject item in prefabObject)//  アイテムがあるかの確認
+            {
+                if (item.name == itemName)
+                {
+                    isSpawn = true;
+                }
+            }
+            //   生成最大数より生成した数が多くなったらreturn
+            if(maxSpawn <= spawnCount && spawn == true && isSpawn == false)
+            {
+                return false;
+            }
+            else return true;
+            
+        }
         private int RandomPosition(int range, int previousRandom)
         {
+            if (range <= 1) return 0; // rangeが1以下の場合は常に0を返す
             int random;
             do
             {

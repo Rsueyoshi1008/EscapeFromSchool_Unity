@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
+using UniRx;
 using UnityEngine.Events;
 namespace MVRP.Item.Managers
 {
@@ -12,7 +14,7 @@ namespace MVRP.Item.Managers
         //  イベント
         public UnityAction<string,Sprite> _viewItem;
         public UnityAction releaseEscape;
-        public UnityAction<int,float> onRevealEvent;
+        public Subject<Tuple<int, float>> onRevealEvent = new Subject<Tuple<int, float>>();
         public UnityAction<bool> viewEscapeKey;
         public UnityAction<string> spawnItem;
         public UnityAction<float> ViewEffectiveTime;
@@ -41,7 +43,7 @@ namespace MVRP.Item.Managers
             }
             //  PlayerViewのテキストを初期化
             _viewItem?.Invoke("",null);
-            onRevealEvent?.Invoke(1,0);//   敵が透ける効果をリセット
+            onRevealEvent.OnNext(Tuple.Create(1,0f));//   敵が透ける効果をリセット
         }
         void Start()
         {
@@ -67,16 +69,17 @@ namespace MVRP.Item.Managers
             {
                 if(itemsEffectiveTime.ContainsKey("TransparencyItem"))
                 {
-                    onRevealEvent?.Invoke(1,itemsEffectiveTime["TransparencyItem"]);
+                    onRevealEvent.OnNext(Tuple.Create(1,itemsEffectiveTime["TransparencyItem"]));
                     ViewEffectiveTime?.Invoke(itemsEffectiveTime["TransparencyItem"]);
                     viewEscapeKey?.Invoke(true);
                     spawnItem?.Invoke("TransparencyItem");
+                    SetSpawnCount("TransparencyItem", -1);
                     StartCoroutine(GetItemObjectAfterDelay(itemsEffectiveTime["TransparencyItem"]));
                 }
             }
             if(getItemName == "PerfectItem")
             {
-                onRevealEvent?.Invoke(1,itemsEffectiveTime["PerfectItem"]);
+                onRevealEvent.OnNext(Tuple.Create(1,itemsEffectiveTime["PerfectItem"]));
                 ViewEffectiveTime?.Invoke(itemsEffectiveTime["PerfectItem"]);
                 viewEscapeKey?.Invoke(true);
                 StartCoroutine(GetItemObjectAfterDelay(itemsEffectiveTime["PerfectItem"]));
@@ -125,6 +128,65 @@ namespace MVRP.Item.Managers
                 }
             }
         }
+        public Vector2 MaxSpawnCountAndSpawnCount(string itemName)
+        {
+            foreach(MainItem status in itemDataBase.items)//    取得したアイテムの情報の情報
+            {
+                if(status.objectName != "")//   空欄じゃなかったら
+                {
+                    if(status.objectName == itemName)
+                    {
+                        return new Vector2(status.maxSpawnCount,status.spawnCount);
+                    }
+                    
+                }
+            }
+            return new Vector2(0,0);
+        }
+        public void SetSpawnCount(string itemName, int count)
+        {
+            foreach(MainItem status in itemDataBase.items)//    取得したアイテムの情報の情報
+            {
+                if(status.objectName != "")//   空欄じゃなかったら
+                {
+                    if(status.objectName == itemName)
+                    {
+                        status.spawnCount += count;
+                    }
+                    
+                }
+            }
+        }
+        public int GetPreviousRandom(string itemName)
+        {
+            foreach(MainItem status in itemDataBase.items)//    取得したアイテムの情報の情報
+            {
+                if(status.objectName != "")//   空欄じゃなかったら
+                {
+                    if(status.objectName == itemName)//    PlayerViewにアイテム名の表示
+                    {
+                        return status.previousRandom;
+                    }
+                    
+                }
+            }
+            return -1;
+        }
+        public void SetPreviousRandom(string itemName, int random)
+        {
+            foreach(MainItem status in itemDataBase.items)//    取得したアイテムの情報の情報
+            {
+                if(status.objectName != "")//   空欄じゃなかったら
+                {
+                    if(status.objectName == itemName)//    PlayerViewにアイテム名の表示
+                    {
+                        status.previousRandom = random;
+                    }
+                    
+                }
+            }
+        }
+        
         public void GetName(string _itemName)//Playerが獲得したアイテムの名前を取得
         {
             getItemName = _itemName;

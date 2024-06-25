@@ -19,3 +19,6 @@ MonoBehaviour:
   gameObject: {fileID: 101410, guid: c08b700bc96ee446685910832e6b01ad, type: 3}
   effectiveTime: 200
   previousRandom: 0
+  isSpawn: 0
+  spawnCount: 0
+  maxSpawnCount: 1

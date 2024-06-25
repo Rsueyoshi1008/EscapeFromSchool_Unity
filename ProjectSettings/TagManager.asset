@@ -13,6 +13,8 @@ TagManager:
   - Clear
   - Item
   - Stair
+  - InStair
+  - EntryStair
   layers:
   - Default
   - TransparentFX

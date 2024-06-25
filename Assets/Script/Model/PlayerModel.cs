@@ -19,11 +19,21 @@ namespace MVRP.Player.Models
         //  UniRx
         public IReadOnlyReactiveProperty<string> GetItemName => _getItemName;
         private readonly StringReactiveProperty _getItemName = new StringReactiveProperty("");
-
-        public ReactiveProperty<bool> IsCursor => _isCursor;// カーソル表示の監視
-        private readonly BoolReactiveProperty _isCursor = new BoolReactiveProperty(false);
         public IReadOnlyReactiveProperty<float> GetPlayerStamina => _getPlayerStamina;
         private readonly FloatReactiveProperty _getPlayerStamina = new FloatReactiveProperty();
+        public ReactiveProperty<bool> IsCursor => _isCursor;// カーソル表示の監視
+        private readonly BoolReactiveProperty _isCursor = new BoolReactiveProperty(false);
+        /*
+        public IReadOnlyReactiveProperty<string> ChangeScene => _changeScene;
+        private readonly StringReactiveProperty _changeScene = new StringReactiveProperty("");
+        public IReadOnlyReactiveProperty<string> ReItemSpawnEvent => _reItemSpawnEvent;//  リスポーンイベント
+        private readonly StringReactiveProperty _reItemSpawnEvent = new StringReactiveProperty("");
+        public IReadOnlyReactiveProperty<float> SnycPlayerMaxDashStamina => _snycPlayerMaxDashStamina;//   Playerのスタミナの同期
+        private readonly FloatReactiveProperty _snycPlayerMaxDashStamina = new FloatReactiveProperty();
+        public ReactiveProperty<bool> EventKey => _eventKey;// カーソル表示の監視
+        private readonly BoolReactiveProperty _eventKey = new BoolReactiveProperty(false);
+        */
+        
         //  アニメーション  //
         bool _isRunAnimation;//  走るアニメーション
         float _moveSpeedAnimation;// 走りから歩きの移行
@@ -124,10 +134,12 @@ namespace MVRP.Player.Models
                                 currentOutline.enabled = false;
                             }
                             currentOutline = outline;
+                            
                         }
                         //  OutLineのアクティブ化
                         outline.enabled = true;
-
+                        //_eventKey.Value = true;
+                        eventKey?.Invoke(true);
                     }
                 }
                 else
@@ -137,6 +149,8 @@ namespace MVRP.Player.Models
                     {
                         currentOutline.enabled = false;
                         currentOutline = null;
+                        //_eventKey.Value =  false;
+                        eventKey?.Invoke(false);
                     }
                 }
                 if (cameraHit.collider.gameObject.tag == "Item")
@@ -148,6 +162,8 @@ namespace MVRP.Player.Models
                         // (clone)を削除
                         itemName = itemName.Replace("(clone)", "").Trim();
                         _getItemName.Value = itemName;
+                        //_eventKey.Value =  false;
+                        eventKey?.Invoke(false);
                         getItemAudioSource.Play();
                         Destroy(cameraHit.collider.gameObject);//   獲得したアイテムを削除する
                     }
@@ -172,7 +188,7 @@ namespace MVRP.Player.Models
             {
                 if (Input.GetKey(KeyCode.LeftShift))
                 {
-                    if (isWallHit != true)// 壁に当たっていないときのみダッシュ可能
+                    if (isWallHit == false && isStair == false)// すり抜けするオブジェクトに触れていないときダッシュ可能
                     {
                         StartDash();
                         _isRunAnimation = true;
@@ -206,6 +222,7 @@ namespace MVRP.Player.Models
                 {
                     if (Input.GetKeyDown(KeyCode.Space))
                     {
+                        Debug.Log("Jump");
                         Jump();
                     }
                 }
@@ -283,12 +300,14 @@ namespace MVRP.Player.Models
                 }
                 if(Physics.Raycast(stairRay, out inputHit, StairRayDistance))// 階段を検知するためのRay
                 {
-                    if(inputHit.collider.gameObject.tag == "Stair" && isStair == false)
+                    if(inputHit.collider.gameObject.tag == "Stair" && isStair == true)
                     {
-                        isStair = true;
                         StairMove();
                     }
-                    else isStair = false;
+                    if(inputHit.collider.gameObject.tag == "EntryStair")
+                    {
+                        isStair = !isStair;
+                    }
                 }
             }
         }
@@ -363,7 +382,7 @@ namespace MVRP.Player.Models
         //  階段を上るのに必要な計算
         private float calculateJumpForce(float height)
         {
-            return Mathf.Sqrt(2 * height * Physics.gravity.magnitude);
+            return Mathf.Sqrt(2 * height * Physics.gravity.magnitude) * 1.2f;
         }
         public void Jump()
         {
@@ -410,6 +429,7 @@ namespace MVRP.Player.Models
         }
         public void GetMaxStamina()
         {
+            //_snycPlayerMaxDashStamina.Value = maxDashStamina;
             snycPlayerMaxDashStamina?.Invoke(maxDashStamina);
         }
 
@@ -454,6 +474,7 @@ namespace MVRP.Player.Models
             //  敵から発見状態で敵に触れて時にリスポーンをする
             if (other.gameObject.tag == "Student" && isCameraMovementPaused == true)
             {
+                //_reItemSpawnEvent.Value = "EscapeKey";
                 reItemSpawnEvent?.Invoke("EscapeKey");
                 reCameraEvent?.Invoke();
                 transform.position = reStartPosition.position;
@@ -469,6 +490,7 @@ namespace MVRP.Player.Models
                 _doorController = collision.gameObject.GetComponent<DoorController>();
                 _doorController.GetIsOutLine(true);
                 // Viewに推すボタンの表示をする
+                //_eventKey.Value = true;
                 eventKey?.Invoke(true);
 
             }
@@ -477,6 +499,7 @@ namespace MVRP.Player.Models
             {
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
+                //_changeScene.Value = "Clear";
                 changeScene?.Invoke("Clear");
             }
         }
@@ -487,6 +510,7 @@ namespace MVRP.Player.Models
             {
                 isInDoor = false;
                 _doorController.GetIsOutLine(false);
+                //_eventKey.Value = false;
                 eventKey?.Invoke(false);
             }
         }

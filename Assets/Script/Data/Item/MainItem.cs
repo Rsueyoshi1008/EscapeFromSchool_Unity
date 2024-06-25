@@ -12,6 +12,9 @@ public class MainItem : ScriptableObject
     public bool unlock; //アイテムの開放条件
     public GameObject gameObject;   //アイテムの本体
     public float effectiveTime; //アイテムの効果時間
-    public int previousRandom;  //同じ場所にアイテムを生成しないために乱数を記録する
-    public bool isSpawn;    //アイテムが生成されているかを保持
+    public int maxSpawnCount;  //生成したい上限数
+    [HideInInspector] public int previousRandom;  //同じ場所にアイテムを生成しないために乱数を記録する
+    [HideInInspector] public bool isSpawn;    //生成されているかを保持
+    [HideInInspector] public int spawnCount;  //生成された数
+    
 }
