@@ -11,6 +11,7 @@ namespace MVRP.Game.managers
         [SerializeField] private InitializeManager _initializeManager;
         void Start()
         {
+            Application.targetFrameRate = 60; //FPSを60に設定
             mainGameObject.SetActive(false);
             clearGameObject.SetActive(false);
             titleGameObject.SetActive(true);
