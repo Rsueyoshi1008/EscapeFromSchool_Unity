@@ -140,6 +140,7 @@ namespace MVRP.Item.Models
         {
             Vector2 maxSpawnCountAndSpawnCount = getMaxSpawnCountAndSpawnCount?.Invoke(itemName) ?? new Vector2 (0,0);
             float max = maxSpawnCountAndSpawnCount.x;
+            float spawnCount = maxSpawnCountAndSpawnCount.y;
             //   アイテムが生成可能かを確認する
             //   可能な時はtrueを返す
             if(CheckItemSpawnEligibility(itemName))
@@ -160,12 +161,21 @@ namespace MVRP.Item.Models
                 }
                 else
                 {
-                    for(int i = 0; i < max; i++)//  生成上限までアイテムを生成する
+                    if(spawnCount <= max)
                     {
-                        // 新しいアイテムを生成
-                        GameObject newItem = SpawnNewItem(itemToSpawn,itemName);
-                        spawnedItems[itemName] = newItem;// 生成したアイテムを記録
+                        if(spawnCount != 0)
+                        {
+                            spawnCount--;
+                        }
+                        for(int i = (int)spawnCount; i < max; i++)//  生成上限までアイテムを生成する
+                        {
+                            // 新しいアイテムを生成
+                            GameObject newItem = SpawnNewItem(itemToSpawn,itemName);
+                            spawnedItems[itemName] = newItem;// 生成したアイテムを記録
+                            
+                        }
                     }
+                    
                 }
                 setIsSpawn?.Invoke(itemName);
             }
@@ -174,7 +184,6 @@ namespace MVRP.Item.Models
         //  スポーン地点をランダムに選んでそこに移動する
         public void UpdateItemPosition(string itemName)
         {
-            Debug.Log("UpdatePosition");
             int tmpPreviousRandom = getPreviousRandom?.Invoke(itemName) ?? -1;
             List<Transform> spawnPoints = GetSpawnPoints(itemName);
             int randomIndex = RandomPosition(spawnPoints.Count,tmpPreviousRandom);

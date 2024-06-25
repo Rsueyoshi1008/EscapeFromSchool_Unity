@@ -45,7 +45,7 @@ namespace MVRP.TutorialsPopup.Views
         
         void Update()
         {
-            if(Input.GetKeyDown(KeyCode.Tab))
+            if(Input.GetKeyDown(KeyCode.Escape))
             {
                 if(isTutorialSentenceEnd == true)
                 {
@@ -71,7 +71,7 @@ namespace MVRP.TutorialsPopup.Views
                     inGameObject.SetActive(false);
                     staminaArray.gameObject.SetActive(false);
                 } 
-                if(tutorialSentence[buttonClickCount] == "理解できたかな？Tabキーを押して始めよう！")//    チュートリアルの終わり
+                if(tutorialSentence[buttonClickCount] == "理解できたかな？Escapeキーを押して始めよう！")//    チュートリアルの終わり
                 {
                     SetText(tutorialSentence[buttonClickCount]);
                     isTutorialSentenceEnd = true;

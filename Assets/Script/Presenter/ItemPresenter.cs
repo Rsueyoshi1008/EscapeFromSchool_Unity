@@ -4,7 +4,7 @@ using MVRP.Item.Managers;
 using MVRP.Player.Views;
 using MVRP.Doors.Models;
 using MVRP.Cameras.Models;
-using Unity.Collections;
+using MVRP.Player.Models;
 using UniRx;
 
 namespace MVRP.Items.Presenter
@@ -15,6 +15,8 @@ namespace MVRP.Items.Presenter
         [SerializeField] private ItemManager _itemManager;
         //  PlayerView  //
         [SerializeField] private PlayerView _playerView;
+        //  PlayerModel //
+        [SerializeField] private PlayerModel _playerModel;
         //  DoorController  //
         [SerializeField] private DoorController _doorController;
         //  ItemSpawn   //
@@ -47,6 +49,7 @@ namespace MVRP.Items.Presenter
             //  脱出鍵の周りが見える効果
             _itemManager.viewEscapeKey = _playerView.SetCameraRawImage;
             _itemManager.spawnItem = _itemSpawn.SpawnItemIfNameExists;
+            _itemManager.setItemNameFromPlayerModel = _playerModel.SetItemName;
         }
         // コルーチンを開始するためのハンドラーメソッド
         private void HandleViewEffectiveTime(float time)

@@ -13,5 +13,4 @@ MonoBehaviour:
   m_Name: JumpPower
   m_EditorClassIdentifier: 
   type: JumpPower
-  value: 5
-  sprite: {fileID: 0}
+  value: 50

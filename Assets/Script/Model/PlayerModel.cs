@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 using UniRx;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -161,7 +162,7 @@ namespace MVRP.Player.Models
                         string itemName = cameraHit.collider.gameObject.name.Replace("(Clone)", "");
                         // (clone)を削除
                         itemName = itemName.Replace("(clone)", "").Trim();
-                        _getItemName.Value = itemName;
+                        _getItemName.Value = itemName;//    取得したアイテム名を格納
                         //_eventKey.Value =  false;
                         eventKey?.Invoke(false);
                         getItemAudioSource.Play();
@@ -222,7 +223,6 @@ namespace MVRP.Player.Models
                 {
                     if (Input.GetKeyDown(KeyCode.Space))
                     {
-                        Debug.Log("Jump");
                         Jump();
                     }
                 }
@@ -233,14 +233,17 @@ namespace MVRP.Player.Models
 
             }
 
-            if (Input.GetKeyDown(KeyCode.Tab))
+            if (Input.GetKeyDown(KeyCode.Escape))
             {
                 //  カーソルの表示、非表示を行う    //
                 ChangeCursorVisible();
             }
-
-            anim.SetBool("Run", _isRunAnimation);
-            anim.SetFloat("Walk", Mathf.Abs(_moveSpeedAnimation));
+            if (Input.GetKeyDown(KeyCode.Escape) && Input.GetKey(KeyCode.G))
+            {
+                //  ビルド時にゲームを終了させる
+                Application.Quit();
+            }
+            
         }
         
         void FixedUpdate()
@@ -277,6 +280,7 @@ namespace MVRP.Player.Models
                             Vector3 slideDirection = Vector3.ProjectOnPlane(transform.forward, inputHit.normal).normalized;
                             Vector3 slideMovement = slideDirection * moveSpeed * Time.fixedDeltaTime;
                             rb.MovePosition(transform.position + slideMovement);
+                            
                         }
                         else if (inputVertical < 0)//    後ろに入力しているとき
                         {
@@ -298,15 +302,15 @@ namespace MVRP.Player.Models
                     isWallHit = false;
                     Move(inputHorizontal, inputVertical);
                 }
+                if(inputHorizontal == 0f && inputVertical == 0f)//  移動キーを離したときにすぐに停止する
+                {
+                    Move(0f,0f);
+                }
                 if(Physics.Raycast(stairRay, out inputHit, StairRayDistance))// 階段を検知するためのRay
                 {
                     if(inputHit.collider.gameObject.tag == "Stair" && isStair == true)
                     {
                         StairMove();
-                    }
-                    if(inputHit.collider.gameObject.tag == "EntryStair")
-                    {
-                        isStair = !isStair;
                     }
                 }
             }
@@ -359,6 +363,11 @@ namespace MVRP.Player.Models
             }
         }
 
+
+        public void SetItemName()// アイテム名の初期化
+        {
+            _getItemName.Value = "";
+        }
         //  移動処理
         public void Move(float _inputHorizontal, float _inputVertical)
         {
@@ -479,6 +488,7 @@ namespace MVRP.Player.Models
                 reCameraEvent?.Invoke();
                 transform.position = reStartPosition.position;
                 isCameraMovementPaused = false;
+                isStair = false;//  階段のダッシュ不可フラグを初期化
             }
         }
         private void OnTriggerEnter(Collider collision)
@@ -502,16 +512,26 @@ namespace MVRP.Player.Models
                 //_changeScene.Value = "Clear";
                 changeScene?.Invoke("Clear");
             }
+            //  階段エリアにいるときだけ走るのを禁止にする
+            if(collision.gameObject.tag == "InStair")
+            {
+                isStair = true;
+            }
         }
         private void OnTriggerExit(Collider other)
         {
-            // ドアの開閉を可能にする
+            // ドアの開閉を不能にする
             if (other.gameObject.tag == "Door")
             {
                 isInDoor = false;
                 _doorController.GetIsOutLine(false);
                 //_eventKey.Value = false;
                 eventKey?.Invoke(false);
+            }
+            //  走れるようにする
+            if(other.gameObject.tag == "InStair")
+            {
+                isStair = false;
             }
         }
         

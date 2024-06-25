@@ -17,6 +17,7 @@ namespace MVRP.Item.Managers
         public Subject<Tuple<int, float>> onRevealEvent = new Subject<Tuple<int, float>>();
         public UnityAction<bool> viewEscapeKey;
         public UnityAction<string> spawnItem;
+        public UnityAction setItemNameFromPlayerModel;
         public UnityAction<float> ViewEffectiveTime;
         
         private string getItemName;
@@ -75,6 +76,7 @@ namespace MVRP.Item.Managers
                     spawnItem?.Invoke("TransparencyItem");
                     SetSpawnCount("TransparencyItem", -1);
                     StartCoroutine(GetItemObjectAfterDelay(itemsEffectiveTime["TransparencyItem"]));
+                    setItemNameFromPlayerModel?.Invoke();
                 }
             }
             if(getItemName == "PerfectItem")
