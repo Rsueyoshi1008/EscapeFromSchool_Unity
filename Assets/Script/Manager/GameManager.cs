@@ -1,6 +1,4 @@
 using UnityEngine;
-using MVRP.Player.Presenter;
-using MVRP.Items.Presenter;
 namespace MVRP.Game.managers
 {
     public class GameManager : MonoBehaviour
