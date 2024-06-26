@@ -1,4 +1,5 @@
 using System;
+using UniRx;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,21 +20,32 @@ namespace MVRP.Item.Models
         private List<GameObject> prefabObject;
         //  生成したオブジェクトの管理オブジェクト
         [SerializeField] private GameObject spawnItemObjectManager;
-        //  イベント
-        public Func<List<string>, List<GameObject>> getItemObject;
+        // UniRxのSubjectを使用してリクエストとレスポンスを管理
+        public IObservable<List<GameObject>> GetItemObjectResponse => _getItemObjectResponse.AsObservable();
+        private readonly Subject<List<GameObject>> _getItemObjectResponse = new Subject<List<GameObject>>();
+        public IObservable<List<string>> GetItemObjectRequest => _getItemObjectRequest.AsObservable();
+        private readonly Subject<List<string>> _getItemObjectRequest = new Subject<List<string>>();
+
+        // UniRxのSubjectを使用してイベントを管理
+        private readonly Subject<(string, int)> _setPreviousRandomSubject = new Subject<(string, int)>();
+        private readonly Subject<string> _setIsSpawnSubject = new Subject<string>();
+        private readonly Subject<(string, int)> _setSpawnCountSubject = new Subject<(string, int)>();
+
+        public IObservable<(string, int)> SetPreviousRandom => _setPreviousRandomSubject.AsObservable();
+        public IObservable<string> SetIsSpawn => _setIsSpawnSubject.AsObservable();
+        public IObservable<(string, int)> SetSpawnCount => _setSpawnCountSubject.AsObservable();
+
         public Func<string, bool> getIsSpawn;
         public Func<string, int> getPreviousRandom;
         public Func<string, Vector2> getMaxSpawnCountAndSpawnCount;
-        public UnityAction<string, int> setPreviousRandom;
-        public UnityAction<string> setIsSpawn;
-        public UnityAction<string,int> setSpawnCount;
+
         private bool itemSpawned = false;
         // コルーチンの定義
         private IEnumerator GetItemObjectAfterDelay(float delay)
         {
             // 指定された秒数待機
             yield return new WaitForSeconds(delay);
-            prefabObject = getItemObject?.Invoke(spawnItemObjectName);
+            _getItemObjectRequest.OnNext(spawnItemObjectName);
         }
         public void Initialize()
         {
@@ -51,9 +63,8 @@ namespace MVRP.Item.Models
         void Start()
         {
             // 1秒後にアイテムオブジェクトを取得するコルーチンを開始
-            //  ディレイをかけないとイベントの紐づけが完了する前に呼ばれちゃう
             StartCoroutine(GetItemObjectAfterDelay(1f));
-            //  アイテムのSpawn地点の設定
+            // アイテムのSpawn地点の設定
             InitializeSpawnPoints();
         }
         void Update()
@@ -135,7 +146,6 @@ namespace MVRP.Item.Models
                 return new List<Transform>();
             }
         }
-        
         public void SpawnItemIfNameExists(string itemName)
         {
             Vector2 maxSpawnCountAndSpawnCount = getMaxSpawnCountAndSpawnCount?.Invoke(itemName) ?? new Vector2 (0,0);
@@ -145,6 +155,7 @@ namespace MVRP.Item.Models
             //   可能な時はtrueを返す
             if(CheckItemSpawnEligibility(itemName))
             {
+                Debug.Log("アイテム生成開始");
                 GameObject itemToSpawn = null;
                 foreach (GameObject item in prefabObject)//  脱出用のアイテムオブジェクト取得
                 {
@@ -157,10 +168,12 @@ namespace MVRP.Item.Models
                 List<Transform> spawnEscapePoints = GetSpawnPoints(itemName);// 生成位置の取得
                 if (spawnEscapePoints.Count == 0)// 生成地点がなかった場合何もしない
                 {
+                    Debug.Log("スポーン位置なし");
                     return;
                 }
                 else
                 {
+                    Debug.Log("アイテムの生成その4");
                     if(spawnCount <= max)
                     {
                         if(spawnCount != 0)
@@ -177,19 +190,40 @@ namespace MVRP.Item.Models
                     }
                     
                 }
-                setIsSpawn?.Invoke(itemName);
+                _setIsSpawnSubject.OnNext(itemName);
+            }
+            else
+            {
+                Debug.LogError("アイテム生成チェックが通らない!");
+                // ゲームの実行を停止する
+                #if UNITY_EDITOR
+                    UnityEditor.EditorApplication.isPlaying = false;
+                #endif
             }
             
+        }
+        public void SetPrefabObject(List<GameObject> objects)
+        {
+            prefabObject = objects;
+        }
+        public void PublishItemObjectResponse(List<GameObject> response)
+        {
+            _getItemObjectResponse.OnNext(response);
         }
         //  スポーン地点をランダムに選んでそこに移動する
         public void UpdateItemPosition(string itemName)
         {
+            if (!spawnedItems.ContainsKey(itemName) || spawnedItems[itemName] == null)
+            {
+                // 位置を更新しようとしているオブジェクトがないときは何もしない
+                return;
+            }
             int tmpPreviousRandom = getPreviousRandom?.Invoke(itemName) ?? -1;
             List<Transform> spawnPoints = GetSpawnPoints(itemName);
             int randomIndex = RandomPosition(spawnPoints.Count,tmpPreviousRandom);
             Vector3 newSpawnPosition = spawnPoints[randomIndex].position;
             spawnedItems[itemName].transform.position = newSpawnPosition; // 位置を更新
-            setPreviousRandom?.Invoke(itemName, randomIndex);//   乱数の記録
+            _setPreviousRandomSubject.OnNext((itemName, randomIndex));//   乱数の記録
         }
         private GameObject SpawnNewItem(GameObject item, string itemName)
         {
@@ -199,8 +233,8 @@ namespace MVRP.Item.Models
             Vector3 spawnPosition = spawnPoints[randomIndex].position;
             Quaternion spawnRotation = item.transform.rotation;
             GameObject newItem = Instantiate(item, spawnPosition, spawnRotation, spawnItemObjectManager.transform);
-            setPreviousRandom?.Invoke(itemName, randomIndex);//   乱数の記録
-            setSpawnCount?.Invoke(itemName, 1);//  生成した数を追加
+            _setPreviousRandomSubject.OnNext((itemName, randomIndex));//   乱数の記録
+            _setSpawnCountSubject.OnNext((itemName, 1));//  生成した数を追加
             return newItem;
         }
         private bool CheckItemSpawnEligibility(string itemName)
@@ -238,4 +272,3 @@ namespace MVRP.Item.Models
         }
     }
 }
-

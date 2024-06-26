@@ -12,32 +12,36 @@ namespace MVRP.Player.Models
         // Unityのコンポーネント
         private Rigidbody rb;
         [SerializeField] private PlayerDataBase playerDataBase;//   Playerのステータスを格納
-        [SerializeField] private Animator anim;
         [SerializeField] private Transform groundCheck;//   地面との接触判定
         //  オーディオ  //
         [SerializeField] private AudioSource getItemAudioSource;
 
-        //  UniRx
+        //  UniRx   //
+        //  取得したItemObjectNameを格納する
         public IReadOnlyReactiveProperty<string> GetItemName => _getItemName;
         private readonly StringReactiveProperty _getItemName = new StringReactiveProperty("");
+        //  スタミナを取得
         public IReadOnlyReactiveProperty<float> GetPlayerStamina => _getPlayerStamina;
         private readonly FloatReactiveProperty _getPlayerStamina = new FloatReactiveProperty();
-        public ReactiveProperty<bool> IsCursor => _isCursor;// カーソル表示の監視
+        // カーソル表示の監視
+        public ReactiveProperty<bool> IsCursor => _isCursor;
         private readonly BoolReactiveProperty _isCursor = new BoolReactiveProperty(false);
-        /*
+        //  敵にぶつかった時にアイテムの位置を更新する
+        public IReadOnlyReactiveProperty<string> ReItemSpawnEvent => _reItemSpawnEvent;
+        private readonly StringReactiveProperty _reItemSpawnEvent = new StringReactiveProperty("");
+        //   Playerのスタミナの同期
+        public IReadOnlyReactiveProperty<float> SnycPlayerMaxDashStamina => _snycPlayerMaxDashStamina;
+        private readonly FloatReactiveProperty _snycPlayerMaxDashStamina = new FloatReactiveProperty();
+        // カーソル表示の監視
+        public ReactiveProperty<bool> EventKey => _eventKey;
+        private readonly BoolReactiveProperty _eventKey = new BoolReactiveProperty(false);
+        //  リスポーンイベント
         public IReadOnlyReactiveProperty<string> ChangeScene => _changeScene;
         private readonly StringReactiveProperty _changeScene = new StringReactiveProperty("");
-        public IReadOnlyReactiveProperty<string> ReItemSpawnEvent => _reItemSpawnEvent;//  リスポーンイベント
-        private readonly StringReactiveProperty _reItemSpawnEvent = new StringReactiveProperty("");
-        public IReadOnlyReactiveProperty<float> SnycPlayerMaxDashStamina => _snycPlayerMaxDashStamina;//   Playerのスタミナの同期
-        private readonly FloatReactiveProperty _snycPlayerMaxDashStamina = new FloatReactiveProperty();
-        public ReactiveProperty<bool> EventKey => _eventKey;// カーソル表示の監視
-        private readonly BoolReactiveProperty _eventKey = new BoolReactiveProperty(false);
-        */
-        
-        //  アニメーション  //
-        bool _isRunAnimation;//  走るアニメーション
-        float _moveSpeedAnimation;// 走りから歩きの移行
+        //  リスポーンイベント
+        public IObservable<Unit> ReCameraEvent => _reCameraEventSubject.AsObservable();
+        private readonly Subject<Unit> _reCameraEventSubject = new Subject<Unit>();
+
 
         //  ステータス  //
         float moveSpeed;//   Playerの今の移動速度
@@ -65,13 +69,6 @@ namespace MVRP.Player.Models
         [SerializeField] private float StairRayDistance;// 階段を検知するRayを飛ばす距離
         RaycastHit inputHit;//   壁との衝突処理用のRay構造体
         RaycastHit cameraHit;// カメラが向いてる方向に飛ばすRay構造体
-        //  イベント  //
-        public UnityAction<string> changeScene;
-        public UnityAction<bool> eventKey;
-        public UnityAction<string> reItemSpawnEvent;//  リスポーンイベント
-        public UnityAction reCameraEvent;//  リスポーンイベント
-        public UnityAction cameraRawImageEvent;// ViewのRawImageをfalseにする
-        public UnityAction<float> snycPlayerMaxDashStamina;//   Playerのスタミナの同期
         //  現在アクティブなアウトラインを追跡するための変数
         Outline currentOutline = null;
 
@@ -139,8 +136,7 @@ namespace MVRP.Player.Models
                         }
                         //  OutLineのアクティブ化
                         outline.enabled = true;
-                        //_eventKey.Value = true;
-                        eventKey?.Invoke(true);
+                        _eventKey.Value = true;
                     }
                 }
                 else
@@ -150,8 +146,7 @@ namespace MVRP.Player.Models
                     {
                         currentOutline.enabled = false;
                         currentOutline = null;
-                        //_eventKey.Value =  false;
-                        eventKey?.Invoke(false);
+                        _eventKey.Value =  false;
                     }
                 }
                 if (cameraHit.collider.gameObject.tag == "Item")
@@ -163,8 +158,7 @@ namespace MVRP.Player.Models
                         // (clone)を削除
                         itemName = itemName.Replace("(clone)", "").Trim();
                         _getItemName.Value = itemName;//    取得したアイテム名を格納
-                        //_eventKey.Value =  false;
-                        eventKey?.Invoke(false);
+                        _eventKey.Value =  false;
                         getItemAudioSource.Play();
                         Destroy(cameraHit.collider.gameObject);//   獲得したアイテムを削除する
                     }
@@ -179,7 +173,7 @@ namespace MVRP.Player.Models
                 
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
-                testChangeScene?.Invoke("Clear");
+                _changeScene.Value = "Clear";
                 
                 //_getItemName.Value = "PerfectItem";
             }
@@ -192,19 +186,16 @@ namespace MVRP.Player.Models
                     if (isWallHit == false && isStair == false)// すり抜けするオブジェクトに触れていないときダッシュ可能
                     {
                         StartDash();
-                        _isRunAnimation = true;
                     }
                     else
                     {
                         StartWalk();
-                        _isRunAnimation = false;
                     }
 
                 }
                 else
                 {
                     StartWalk();
-                    _isRunAnimation = false;
                 }
             }
             else CoolDownDash();
@@ -438,8 +429,7 @@ namespace MVRP.Player.Models
         }
         public void GetMaxStamina()
         {
-            //_snycPlayerMaxDashStamina.Value = maxDashStamina;
-            snycPlayerMaxDashStamina?.Invoke(maxDashStamina);
+            _snycPlayerMaxDashStamina.Value = maxDashStamina;
         }
 
         public void ChangeCursorVisible()
@@ -483,9 +473,8 @@ namespace MVRP.Player.Models
             //  敵から発見状態で敵に触れて時にリスポーンをする
             if (other.gameObject.tag == "Student" && isCameraMovementPaused == true)
             {
-                //_reItemSpawnEvent.Value = "EscapeKey";
-                reItemSpawnEvent?.Invoke("EscapeKey");
-                reCameraEvent?.Invoke();
+                _reItemSpawnEvent.Value = "EscapeKey";
+                _reCameraEventSubject.OnNext(Unit.Default); // イベントを発行
                 transform.position = reStartPosition.position;
                 isCameraMovementPaused = false;
                 isStair = false;//  階段のダッシュ不可フラグを初期化
@@ -500,8 +489,7 @@ namespace MVRP.Player.Models
                 _doorController = collision.gameObject.GetComponent<DoorController>();
                 _doorController.GetIsOutLine(true);
                 // Viewに推すボタンの表示をする
-                //_eventKey.Value = true;
-                eventKey?.Invoke(true);
+                _eventKey.Value = true;
 
             }
             // SceneChange
@@ -509,8 +497,7 @@ namespace MVRP.Player.Models
             {
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
-                //_changeScene.Value = "Clear";
-                changeScene?.Invoke("Clear");
+                _changeScene.Value = "Clear";
             }
             //  階段エリアにいるときだけ走るのを禁止にする
             if(collision.gameObject.tag == "InStair")
@@ -525,8 +512,7 @@ namespace MVRP.Player.Models
             {
                 isInDoor = false;
                 _doorController.GetIsOutLine(false);
-                //_eventKey.Value = false;
-                eventKey?.Invoke(false);
+                _eventKey.Value = false;
             }
             //  走れるようにする
             if(other.gameObject.tag == "InStair")

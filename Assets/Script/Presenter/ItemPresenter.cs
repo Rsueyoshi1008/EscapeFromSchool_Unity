@@ -29,16 +29,21 @@ namespace MVRP.Items.Presenter
             _itemManager._viewItem = _playerView.SetItemView;
             _playerView._itemSearchFunction = _itemManager.ItemSearch;
             _itemManager.releaseEscape = _doorController.ReleaseEscape;
-            _itemSpawn.getItemObject = _itemManager.GetItemObject;
+            // アイテムオブジェクトの取得と設定
+            _itemSpawn.GetItemObjectRequest
+                .Select(request => _itemManager.GetItemObject(request))
+                .Where(response => response != null)
+                .Subscribe(response => 
+                {
+                    _itemSpawn.SetPrefabObject(response); // ここでprefabObjectに値を代入
+                    //_itemSpawn.PublishItemObjectResponse(response); // ここでList<GameObject>を発行
+                });
             //  アイテムオブジェクトの取得と設定
             _itemSpawn.getIsSpawn = _itemManager.GetIsSpawn;
-            _itemSpawn.setIsSpawn = _itemManager.SetIsSpawn;
             //  乱数を記録した変数の取得と設定
             _itemSpawn.getPreviousRandom = _itemManager.GetPreviousRandom;
-            _itemSpawn.setPreviousRandom = _itemManager.SetPreviousRandom;
             //  生成の上限数と生成した数の取得と設定
             _itemSpawn.getMaxSpawnCountAndSpawnCount = _itemManager.MaxSpawnCountAndSpawnCount;
-            _itemSpawn.setSpawnCount = _itemManager.SetSpawnCount;
             //  敵が透けるアイテム効果
             _itemManager.onRevealEvent.Subscribe(x => {
                 int param1 = x.Item1;
@@ -50,7 +55,13 @@ namespace MVRP.Items.Presenter
             _itemManager.viewEscapeKey = _playerView.SetCameraRawImage;
             _itemManager.spawnItem = _itemSpawn.SpawnItemIfNameExists;
             _itemManager.setItemNameFromPlayerModel = _playerModel.SetItemName;
+
+            // ItemSpawnのUniRxイベントを購読
+            _itemSpawn.SetPreviousRandom.Subscribe(x => _itemManager.SetPreviousRandom(x.Item1, x.Item2)).AddTo(this);
+            _itemSpawn.SetIsSpawn.Subscribe(x => _itemManager.SetIsSpawn(x)).AddTo(this);
+            _itemSpawn.SetSpawnCount.Subscribe(x => _itemManager.SetSpawnCount(x.Item1, x.Item2)).AddTo(this);
         }
+
         // コルーチンを開始するためのハンドラーメソッド
         private void HandleViewEffectiveTime(float time)
         {

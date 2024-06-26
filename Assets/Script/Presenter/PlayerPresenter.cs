@@ -31,16 +31,17 @@ namespace MVRP.Player.Presenter
         
         private void Start()
         {
-            _playerModel.snycPlayerMaxDashStamina = _playerView.Synchronous;
-            //_playerModel.SnycPlayerMaxDashStamina.Subscribe(x => {_playerView.Synchronous((float)x);}).AddTo(this);
+            _playerModel.SnycPlayerMaxDashStamina.Subscribe(x => {_playerView.Synchronous((float)x);}).AddTo(this);
             _playerModel.testChangeScene = _gameManager.ChangeScene;
             _playerModel.GetPlayerStamina.Subscribe(x => {_playerView.OnSliderValueChanged((float)x);}).AddTo(this);
             // Playerのアイテム取得を監視
             _playerModel.GetItemName.Subscribe(x => {_itemManager.GetName(x);}).AddTo(this);
             
-            _playerModel.reCameraEvent = _cameraControl.ReleaseCameraLock;
-            _playerModel.reItemSpawnEvent = _itemSpawn.UpdateItemPosition;
-            //_playerModel.ReItemSpawnEvent.Subscribe(x => {_itemSpawn.UpdateItemPosition(x);}).AddTo(this);
+            //  敵につかまった時にカメラを固定にする
+            _playerModel.ReCameraEvent.Subscribe(x => {_cameraControl.ReleaseCameraLock();}).AddTo(this);
+
+            //  敵につかまった時にアイテムの位置を更新
+            _playerModel.ReItemSpawnEvent.Subscribe(x => {_itemSpawn.UpdateItemPosition(x);}).AddTo(this);
             
             //_playerModel.cameraRawImageEvent = _playerView.SetCameraRawImage;
             
@@ -50,15 +51,18 @@ namespace MVRP.Player.Presenter
             //  カーソル表示の監視
             _playerModel.IsCursor.Subscribe(x => {_playerView.GetCursorVisibility(x);}).AddTo(this);
             _playerModel.IsCursor.Subscribe(x => {_settingView.GetCursorVisibility(x);}).AddTo(this);
+
             //  カメラの視点固定
             _cameraControl.cameraEulerAngles = _playerModel.GetCameraEulerAngles;
-            _playerModel.eventKey = _playerView.ToggleEventTextVisibility;
-            //_playerModel.EventKey.Subscribe(x => {_playerView.ToggleEventTextVisibility(x);}).AddTo(this);
+
+            //  操作可能オブジェクトに触れたときにキーの表示をする
+            _playerModel.EventKey.Subscribe(x => {_playerView.ToggleEventTextVisibility(x);}).AddTo(this);
+
             //  Rayで取得したオブジェクトの受け取り
             _rayCastManager.managerRayCast_Name += _playerModel.GetRayCastObjectName;
+
             //  シーン遷移
-            _playerModel.changeScene = _gameManager.ChangeScene;
-            //_playerModel.ChangeScene.Subscribe(x => {_gameManager.ChangeScene(x);}).AddTo(this);
+            _playerModel.ChangeScene.Subscribe(x => {_gameManager.ChangeScene(x);}).AddTo(this);
         }
     }
 }
