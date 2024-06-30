@@ -78,7 +78,6 @@ namespace MVRP.Cameras.Models
         public void ReleaseCameraLock()
         {
             isCameraMovementPaused = false;
-            Debug.Log("固定解除");
         }
     }
 }

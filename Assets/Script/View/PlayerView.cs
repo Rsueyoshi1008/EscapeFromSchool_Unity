@@ -1,7 +1,9 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections.Generic;
 using System;
+using System.Runtime.CompilerServices;
 namespace MVRP.Player.Views
 {
     public class PlayerView : MonoBehaviour
@@ -18,14 +20,16 @@ namespace MVRP.Player.Views
         //  スライダー
         [SerializeField] private Slider staminaSlider;
         //  アイテム周りを写すテクスチャ
-        [SerializeField] private RawImage cameraRawImage;
+        [SerializeField] private RawImage cameraItemRawImage;
         //  オーディオ
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private AudioClip clickSound;
+        //  アイテムの周りを写すTexture
+        [SerializeField] private Texture itemTextures;
         public Func<string, string> _itemSearchFunction;
         public void Initialize()
         {
-            cameraRawImage.gameObject.SetActive(false);
+            cameraItemRawImage.gameObject.SetActive(false);
         }
         void Start()
         {
@@ -101,7 +105,7 @@ namespace MVRP.Player.Views
         }
         public void SetCameraRawImage(bool isView)
         {
-            cameraRawImage.gameObject.SetActive(isView);
+            cameraItemRawImage.gameObject.SetActive(isView);
         }
         public void ToggleEventTextVisibility(bool isVisible)
         {

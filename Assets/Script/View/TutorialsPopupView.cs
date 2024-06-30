@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
@@ -13,10 +12,12 @@ namespace MVRP.TutorialsPopup.Views
         [SerializeField] private Image tutorialTextBacGround;
         //  画像
         [SerializeField] private Image staminaArray;
+        [SerializeField] private Image miniMapArray;
         //  ボタン
         [SerializeField] private Button _tutorialButton;
         //  InGameViewオブジェクト
-        [SerializeField] private GameObject inGameObject;
+        [SerializeField] private RawImage miniMap;
+        [SerializeField] private Slider stamina;
         //  イベント
         public UnityAction staminaSnyc;
         public UnityAction unLockPlayerMovementEvent;// Playerの移動制限を解除する
@@ -34,8 +35,10 @@ namespace MVRP.TutorialsPopup.Views
             buttonClickCount = 0;
             IndicationUI();
             SetText(tutorialSentence[buttonClickCount]);
+            stamina.gameObject.SetActive(false);
+            miniMap.gameObject.SetActive(false);
             staminaArray.gameObject.SetActive(false);
-            inGameObject.SetActive(false);
+            miniMapArray.gameObject.SetActive(false);
         }
         void Start()
         {
@@ -63,18 +66,23 @@ namespace MVRP.TutorialsPopup.Views
             {
                 if(tutorialSentence[buttonClickCount] == "Shiftキーを押している間は走れるけどスタミナがあるから左上を見ながらスタミナ切れに注意しよう")//    スタミナゲージを分かりやすくするImageの表示処理
                 {
-                    inGameObject.SetActive(true);
+                    stamina.gameObject.SetActive(true);
                     staminaArray.gameObject.SetActive(true);
                 }
-                else
+                else if(tutorialSentence[buttonClickCount] == "画面に右上の方にミニマップが表示されるよ")
                 {
-                    inGameObject.SetActive(false);
-                    staminaArray.gameObject.SetActive(false);
-                } 
-                if(tutorialSentence[buttonClickCount] == "理解できたかな？Escapeキーを押して始めよう！")//    チュートリアルの終わり
+                    miniMap.gameObject.SetActive(true);
+                    miniMapArray.gameObject.SetActive(true);
+                }
+                else if(tutorialSentence[buttonClickCount] == "理解できたかな？Escapeキーを押して始めよう！")
                 {
                     SetText(tutorialSentence[buttonClickCount]);
                     isTutorialSentenceEnd = true;
+                }
+                else
+                {
+                    staminaArray.gameObject.SetActive(false);
+                    miniMapArray.gameObject.SetActive(false);
                 }
                 SetText(tutorialSentence[buttonClickCount]);
             }
@@ -82,7 +90,6 @@ namespace MVRP.TutorialsPopup.Views
         }
         private void InGameViewIndication()
         {
-            inGameObject.SetActive(true);
             unLockPlayerMovementEvent?.Invoke();
             staminaSnyc?.Invoke();
         }

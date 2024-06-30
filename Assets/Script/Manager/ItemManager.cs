@@ -13,9 +13,11 @@ namespace MVRP.Item.Managers
         private ItemDataBase itemDataBase;
         //  イベント
         public UnityAction<string,Sprite> _viewItem;
-        public UnityAction releaseEscape;
+        public IObservable<Unit> ReleaseEscape => _releaseEscape.AsObservable();
+        private readonly Subject<Unit> _releaseEscape = new Subject<Unit>();
         public Subject<Tuple<int, float>> onRevealEvent = new Subject<Tuple<int, float>>();
-        public UnityAction<bool> viewEscapeKey;
+        public IObservable<bool> ViewEscapeKey => _viewEscapeKey.AsObservable();
+        private readonly Subject<bool> _viewEscapeKey = new Subject<bool>();
         public UnityAction<string> spawnItem;
         public UnityAction setItemNameFromPlayerModel;
         public UnityAction<float> ViewEffectiveTime;
@@ -26,7 +28,8 @@ namespace MVRP.Item.Managers
         {
             // 指定された秒数待機
             yield return new WaitForSeconds(delay);
-            viewEscapeKey?.Invoke(false);
+            //  脱出のカギを非表示する
+            _viewEscapeKey.OnNext(false);
         }
         public void Initialize()
         {
@@ -64,7 +67,7 @@ namespace MVRP.Item.Managers
             
             if(getItemName == "EscapeKey")//  脱出扉の開放条件クリア
             {
-                releaseEscape?.Invoke();
+                _releaseEscape.OnNext(Unit.Default);
             }
             if(getItemName == "TransparencyItem")
             {
@@ -72,7 +75,7 @@ namespace MVRP.Item.Managers
                 {
                     onRevealEvent.OnNext(Tuple.Create(1,itemsEffectiveTime["TransparencyItem"]));
                     ViewEffectiveTime?.Invoke(itemsEffectiveTime["TransparencyItem"]);
-                    viewEscapeKey?.Invoke(true);
+                    _viewEscapeKey.OnNext(true);
                     spawnItem?.Invoke("TransparencyItem");
                     SetSpawnCount("TransparencyItem", -1);
                     StartCoroutine(GetItemObjectAfterDelay(itemsEffectiveTime["TransparencyItem"]));
@@ -81,9 +84,13 @@ namespace MVRP.Item.Managers
             }
             if(getItemName == "PerfectItem")
             {
+                //  敵が透けて見えるShaderに効果時間変更する
                 onRevealEvent.OnNext(Tuple.Create(1,itemsEffectiveTime["PerfectItem"]));
                 ViewEffectiveTime?.Invoke(itemsEffectiveTime["PerfectItem"]);
-                viewEscapeKey?.Invoke(true);
+
+                //  脱出のカギを表示する
+                _viewEscapeKey.OnNext(true);
+
                 StartCoroutine(GetItemObjectAfterDelay(itemsEffectiveTime["PerfectItem"]));
             }
             foreach(MainItem status in itemDataBase.items)//    取得したアイテムの情報の情報

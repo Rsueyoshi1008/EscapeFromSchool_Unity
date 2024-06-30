@@ -7,6 +7,7 @@ using MVRP.Item.Managers;
 using MVRP.RayCast.Models;
 using MVRP.Item.Models;
 using MVRP.Game.managers;
+using MVRP.Floor.managers;
 using UniRx;
 namespace MVRP.Player.Presenter
 {
@@ -28,6 +29,8 @@ namespace MVRP.Player.Presenter
         [SerializeField] private RayCastManager _rayCastManager;
         //  ItemSpawn  //
         [SerializeField] private ItemSpawn _itemSpawn;
+        //  FloorManager  //
+        [SerializeField] private FloorManager _floorManager;
         
         private void Start()
         {
@@ -43,7 +46,8 @@ namespace MVRP.Player.Presenter
             //  敵につかまった時にアイテムの位置を更新
             _playerModel.ReItemSpawnEvent.Subscribe(x => {_itemSpawn.UpdateItemPosition(x);}).AddTo(this);
             
-            //_playerModel.cameraRawImageEvent = _playerView.SetCameraRawImage;
+            //  今何階にいるかを発行
+            _playerModel.SetFloorEvent.Subscribe(x => {_floorManager.GetFloorCount(x);}).AddTo(this);
             
             //  マウスセンシ設定値の監視
             _settingView.Sensitivity.Subscribe(x => {_cameraControl.SyncMouseSensitivity((float)x);}).AddTo(this);

@@ -28,7 +28,8 @@ namespace MVRP.Items.Presenter
         {
             _itemManager._viewItem = _playerView.SetItemView;
             _playerView._itemSearchFunction = _itemManager.ItemSearch;
-            _itemManager.releaseEscape = _doorController.ReleaseEscape;
+            _itemManager.ReleaseEscape.Subscribe(x => {_doorController.ReleaseEscape();}).AddTo(this);
+            
             // アイテムオブジェクトの取得と設定
             _itemSpawn.GetItemObjectRequest
                 .Select(request => _itemManager.GetItemObject(request))
@@ -36,7 +37,6 @@ namespace MVRP.Items.Presenter
                 .Subscribe(response => 
                 {
                     _itemSpawn.SetPrefabObject(response); // ここでprefabObjectに値を代入
-                    //_itemSpawn.PublishItemObjectResponse(response); // ここでList<GameObject>を発行
                 });
             //  アイテムオブジェクトの取得と設定
             _itemSpawn.getIsSpawn = _itemManager.GetIsSpawn;
@@ -52,7 +52,7 @@ namespace MVRP.Items.Presenter
                 }).AddTo(this);
             _itemManager.ViewEffectiveTime += HandleViewEffectiveTime;
             //  脱出鍵の周りが見える効果
-            _itemManager.viewEscapeKey = _playerView.SetCameraRawImage;
+            _itemManager.ViewEscapeKey.Subscribe(x => _playerView.SetCameraRawImage(x)).AddTo(this);
             _itemManager.spawnItem = _itemSpawn.SpawnItemIfNameExists;
             _itemManager.setItemNameFromPlayerModel = _playerModel.SetItemName;
 

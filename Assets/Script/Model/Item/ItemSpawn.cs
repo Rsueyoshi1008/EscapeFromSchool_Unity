@@ -3,7 +3,6 @@ using UniRx;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Events;
 namespace MVRP.Item.Models
 {
     public class ItemSpawn : MonoBehaviour
@@ -21,19 +20,17 @@ namespace MVRP.Item.Models
         //  生成したオブジェクトの管理オブジェクト
         [SerializeField] private GameObject spawnItemObjectManager;
         // UniRxのSubjectを使用してリクエストとレスポンスを管理
-        public IObservable<List<GameObject>> GetItemObjectResponse => _getItemObjectResponse.AsObservable();
         private readonly Subject<List<GameObject>> _getItemObjectResponse = new Subject<List<GameObject>>();
         public IObservable<List<string>> GetItemObjectRequest => _getItemObjectRequest.AsObservable();
         private readonly Subject<List<string>> _getItemObjectRequest = new Subject<List<string>>();
 
         // UniRxのSubjectを使用してイベントを管理
-        private readonly Subject<(string, int)> _setPreviousRandomSubject = new Subject<(string, int)>();
-        private readonly Subject<string> _setIsSpawnSubject = new Subject<string>();
-        private readonly Subject<(string, int)> _setSpawnCountSubject = new Subject<(string, int)>();
-
         public IObservable<(string, int)> SetPreviousRandom => _setPreviousRandomSubject.AsObservable();
+        private readonly Subject<(string, int)> _setPreviousRandomSubject = new Subject<(string, int)>();
         public IObservable<string> SetIsSpawn => _setIsSpawnSubject.AsObservable();
+        private readonly Subject<string> _setIsSpawnSubject = new Subject<string>();
         public IObservable<(string, int)> SetSpawnCount => _setSpawnCountSubject.AsObservable();
+        private readonly Subject<(string, int)> _setSpawnCountSubject = new Subject<(string, int)>();
 
         public Func<string, bool> getIsSpawn;
         public Func<string, int> getPreviousRandom;
@@ -155,7 +152,6 @@ namespace MVRP.Item.Models
             //   可能な時はtrueを返す
             if(CheckItemSpawnEligibility(itemName))
             {
-                Debug.Log("アイテム生成開始");
                 GameObject itemToSpawn = null;
                 foreach (GameObject item in prefabObject)//  脱出用のアイテムオブジェクト取得
                 {
@@ -168,12 +164,10 @@ namespace MVRP.Item.Models
                 List<Transform> spawnEscapePoints = GetSpawnPoints(itemName);// 生成位置の取得
                 if (spawnEscapePoints.Count == 0)// 生成地点がなかった場合何もしない
                 {
-                    Debug.Log("スポーン位置なし");
                     return;
                 }
                 else
                 {
-                    Debug.Log("アイテムの生成その4");
                     if(spawnCount <= max)
                     {
                         if(spawnCount != 0)
@@ -185,7 +179,6 @@ namespace MVRP.Item.Models
                             // 新しいアイテムを生成
                             GameObject newItem = SpawnNewItem(itemToSpawn,itemName);
                             spawnedItems[itemName] = newItem;// 生成したアイテムを記録
-                            
                         }
                     }
                     

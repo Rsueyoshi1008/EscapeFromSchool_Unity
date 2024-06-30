@@ -47,6 +47,9 @@ namespace MVRP.Students.Models
         //Playerの位置
         Transform playerTransform;
 
+        //  ミニマップに表示されるオブジェクト
+        [SerializeField] private GameObject miniMapIcon;
+
         List<Transform> wayPoints = new List<Transform>();
         // コルーチンの定義
         private IEnumerator EnemyMoveAfterDelay(float delay)
@@ -171,9 +174,12 @@ namespace MVRP.Students.Models
                     animationCount = 0.0f;
                 }
             }
+            //  Playerと同じ階層に近づくと音がだんだん大きくなる
             AdjustFootstepVolume();
             AdjustFootstepFilter();
-            //Debug.Log(nav.velocity.magnitude);
+
+            //  Playerと同じ階層にいたときにミニマップに敵を表示する
+            ChangeObjectLayer();
         }
         public float RandomSpeed()
         {
@@ -219,7 +225,20 @@ namespace MVRP.Students.Models
             volume *= Mathf.Clamp01(1 - (heightDifference * heightFactor));
             audioSource.volume = volume;
         }
+        void ChangeObjectLayer()
+        {
+            if (player == null || audioSource == null) return;
 
+            Vector3 playerPosition = player.position;
+            Vector3 enemyPosition = transform.position;
+
+            float heightDifference = Mathf.Abs(playerPosition.y - enemyPosition.y);
+            if(heightDifference <= 4)
+            {
+                miniMapIcon.layer = LayerMask.NameToLayer("Player");
+            }
+            else miniMapIcon.layer = LayerMask.NameToLayer("Default");
+        }
         void AdjustFootstepFilter()
         {
             if (player == null || lowPassFilter == null) return;

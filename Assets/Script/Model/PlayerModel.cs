@@ -41,8 +41,11 @@ namespace MVRP.Player.Models
         //  リスポーンイベント
         public IObservable<Unit> ReCameraEvent => _reCameraEventSubject.AsObservable();
         private readonly Subject<Unit> _reCameraEventSubject = new Subject<Unit>();
-
-
+        //  現在何階なのかをPlayerViewに発行する
+        public IObservable<int> SetFloorEvent => _setFloorEvent.AsObservable();
+        private readonly Subject<int> _setFloorEvent = new Subject<int>();
+        //  階層の数を取得
+        public Func<int> getFloorCount;
         //  ステータス  //
         float moveSpeed;//   Playerの今の移動速度
         float dashStamina;//   ダッシュのスタミナ
@@ -62,6 +65,7 @@ namespace MVRP.Player.Models
         [SerializeField] private float maxStepHeight;
         bool isStair = false;
         private Vector3 velocity;
+        //  階層の処理  //
         //  Ray //
         [SerializeField] private float movementRayDistance;// 移動用のRayを飛ばす距離
         [SerializeField] private Transform rayLaunchPosition;// RaySphereの発射位置
@@ -104,6 +108,7 @@ namespace MVRP.Player.Models
         {
             rb = transform.GetComponent<Rigidbody>();
             transform.position = reStartPosition.position;//    初期値に設定
+            
         }
 
         
@@ -177,7 +182,32 @@ namespace MVRP.Player.Models
                 
                 //_getItemName.Value = "PerfectItem";
             }
-            
+            //  現在の階層を確認
+            if(transform.position.y >= 20)
+            {
+                //_setFloorEvent.OnNext(4);
+                //  屋上
+            }
+            else if(transform.position.y >= 15)
+            {
+                _setFloorEvent.OnNext(3);
+                //  四階
+            }
+            else if(transform.position.y >= 10)
+            {
+                _setFloorEvent.OnNext(2);
+                //  三階
+            }
+            else if(transform.position.y >= 5)
+            {
+                _setFloorEvent.OnNext(1);
+                //  二階
+            }
+            else
+            {
+                _setFloorEvent.OnNext(0);
+                //  一階
+            }
 
             if (isDownDash == false)
             {
@@ -299,6 +329,7 @@ namespace MVRP.Player.Models
                 }
                 if(Physics.Raycast(stairRay, out inputHit, StairRayDistance))// 階段を検知するためのRay
                 {
+                    //Debug.Log(isStair);
                     if(inputHit.collider.gameObject.tag == "Stair" && isStair == true)
                     {
                         StairMove();

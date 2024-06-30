@@ -7,7 +7,9 @@ namespace MVRP.Setting.Views
 {
     public class SettingView : MonoBehaviour
     {
+        //  UI  //
         [SerializeField] private Slider mouseSensitivitySlider;
+        [SerializeField] private Text mouseSensitivityText;
 
         public IReadOnlyReactiveProperty<float> Sensitivity => _sensitivity;
         private readonly FloatReactiveProperty _sensitivity = new FloatReactiveProperty(1.0f);
@@ -21,7 +23,7 @@ namespace MVRP.Setting.Views
         // Update is called once per frame
         void Update()
         {
-
+            mouseSensitivityText.text = mouseSensitivitySlider.value.ToString("F2");
         }
         // Sliderの値が変更されたときに呼び出される関数
         void OnSliderValueChanged()
