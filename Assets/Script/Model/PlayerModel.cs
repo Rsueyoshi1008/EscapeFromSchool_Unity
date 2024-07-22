@@ -91,11 +91,11 @@ namespace MVRP.Player.Models
             {
                 Debug.LogError("PlayerDataBase is not found!");
                 // ゲームの実行を停止する
-                    #if UNITY_EDITOR
+#if UNITY_EDITOR
                 UnityEditor.EditorApplication.isPlaying = false;
-                    #else
+#else
                     Application.Quit();
-                #endif
+#endif
             }
             //  PlayerStatusの取得
             GetStatus();
@@ -108,13 +108,13 @@ namespace MVRP.Player.Models
         {
             rb = transform.GetComponent<Rigidbody>();
             transform.position = reStartPosition.position;//    初期値に設定
-            
+
         }
 
-        
+
         void Update()
         {
-            
+
             // キャラクターのレイヤーマスクを作成
             int layerMask = ~LayerMask.GetMask("Player");
             int outLineLayer = LayerMask.NameToLayer("OutLine");
@@ -137,7 +137,7 @@ namespace MVRP.Player.Models
                                 currentOutline.enabled = false;
                             }
                             currentOutline = outline;
-                            
+
                         }
                         //  OutLineのアクティブ化
                         outline.enabled = true;
@@ -151,7 +151,7 @@ namespace MVRP.Player.Models
                     {
                         currentOutline.enabled = false;
                         currentOutline = null;
-                        _eventKey.Value =  false;
+                        _eventKey.Value = false;
                     }
                 }
                 if (cameraHit.collider.gameObject.tag == "Item")
@@ -163,7 +163,7 @@ namespace MVRP.Player.Models
                         // (clone)を削除
                         itemName = itemName.Replace("(clone)", "").Trim();
                         _getItemName.Value = itemName;//    取得したアイテム名を格納
-                        _eventKey.Value =  false;
+                        _eventKey.Value = false;
                         getItemAudioSource.Play();
                         Destroy(cameraHit.collider.gameObject);//   獲得したアイテムを削除する
                     }
@@ -172,7 +172,7 @@ namespace MVRP.Player.Models
             }
 
             //  Test用のイベント
-            
+            /*
             if(Input.GetKeyDown(KeyCode.F))
             {
                 
@@ -182,23 +182,24 @@ namespace MVRP.Player.Models
                 
                 //_getItemName.Value = "PerfectItem";
             }
+            */
             //  現在の階層を確認
-            if(transform.position.y >= 20)
+            if (transform.position.y >= 20)
             {
                 //_setFloorEvent.OnNext(4);
                 //  屋上
             }
-            else if(transform.position.y >= 15)
+            else if (transform.position.y >= 15)
             {
                 _setFloorEvent.OnNext(3);
                 //  四階
             }
-            else if(transform.position.y >= 10)
+            else if (transform.position.y >= 10)
             {
                 _setFloorEvent.OnNext(2);
                 //  三階
             }
-            else if(transform.position.y >= 5)
+            else if (transform.position.y >= 5)
             {
                 _setFloorEvent.OnNext(1);
                 //  二階
@@ -264,12 +265,12 @@ namespace MVRP.Player.Models
                 //  ビルド時にゲームを終了させる
                 Application.Quit();
             }
-            
+
         }
-        
+
         void FixedUpdate()
         {
-            if(reStart == false)//  Initializeで位置を初期化してもどこかでtransformが変わってるからここでも初期化
+            if (reStart == false)//  Initializeで位置を初期化してもどこかでtransformが変わってるからここでも初期化
             {
                 transform.position = reStartPosition.position;
                 reStart = true;
@@ -290,52 +291,73 @@ namespace MVRP.Player.Models
 
             if (isRestrictedMovement != true && isCameraMovementPaused != true)
             {
-                if (Physics.Raycast(ray, out inputHit, movementRayDistance))
+                RaycastHit[] hits = Physics.RaycastAll(ray, movementRayDistance);
+                RaycastHit nearestWallHit = new RaycastHit();
+                float nearestDistance = float.MaxValue;
+                //Rayに当たったオブジェクトの中から一番近いWallを取得
+                foreach (var hit in hits)
                 {
-                    if (inputHit.collider.gameObject.tag == "Wall")//  壁に当たった時
+                    if (hit.collider.gameObject.tag == "Wall")
+                    {
+                        float distanceToWall = hit.distance;
+                        if (distanceToWall < nearestDistance)
+                        {
+                            nearestDistance = distanceToWall;
+                            nearestWallHit = hit;
+                        }
+                    }
+                }
+                
+                if (nearestWallHit.collider != null)//  壁に当たった時
+                {
+                    if (nearestDistance >= 1.0f)//  壁にめり込みそうになったら前方の入力を無視
                     {
                         if (inputVertical > 0)// 前に入力しているとき
                         {
                             isWallHit = true;
                             // 法線方向に対してプレイヤーをスライドさせる方向を計算
-                            Vector3 slideDirection = Vector3.ProjectOnPlane(transform.forward, inputHit.normal).normalized;
-                            Vector3 slideMovement = slideDirection * moveSpeed * Time.fixedDeltaTime;
-                            rb.MovePosition(transform.position + slideMovement);
-                            
+                            Vector3 slideDirection = Vector3.ProjectOnPlane(transform.forward, nearestWallHit.normal).normalized;
+                            Vector3 slideMovement = slideDirection * moveSpeed;
+                            rb.linearVelocity = slideMovement;
                         }
                         else if (inputVertical < 0)//    後ろに入力しているとき
                         {
                             isWallHit = true;
                             // 法線方向に対してプレイヤーをスライドさせる方向を計算
-                            Vector3 slideDirection = Vector3.ProjectOnPlane(transform.forward, inputHit.normal).normalized;
-                            Vector3 slideMovement = -slideDirection * moveSpeed * Time.fixedDeltaTime;
-                            rb.MovePosition(transform.position + slideMovement);
+                            Vector3 slideDirection = Vector3.ProjectOnPlane(transform.forward, nearestWallHit.normal).normalized;
+                            Vector3 slideMovement = -slideDirection * moveSpeed;
+                            rb.linearVelocity = slideMovement;
                         }
                         else if (inputHorizontal != 0) //    横入力しているときはスライドしない
                         {
                             return;
                         }
+                        
                     }
-                    else Move(inputHorizontal, inputVertical);
+                    else
+                    {
+                        isWallHit = true;
+                        Move(inputHorizontal ,0f);
+                    }
                 }
-                else//  オブジェクトに当たっていない時
+                else
                 {
                     isWallHit = false;
                     Move(inputHorizontal, inputVertical);
-                }
-                if(inputHorizontal == 0f && inputVertical == 0f)//  移動キーを離したときにすぐに停止する
-                {
-                    Move(0f,0f);
-                }
-                if(Physics.Raycast(stairRay, out inputHit, StairRayDistance))// 階段を検知するためのRay
+                } 
+                
+
+                if (Physics.Raycast(stairRay, out inputHit, StairRayDistance))// 階段を検知するためのRay
                 {
                     //Debug.Log(isStair);
-                    if(inputHit.collider.gameObject.tag == "Stair" && isStair == true)
+                    if (inputHit.collider.gameObject.tag == "Stair" && isStair == true)
                     {
                         StairMove();
                     }
                 }
             }
+
+            //Move(inputHorizontal, inputVertical);
         }
         //  Playerのステータス取得
         public void GetStatus()
@@ -403,7 +425,10 @@ namespace MVRP.Player.Models
             // 速度のスケーリング
             velocity = inputDirection * moveSpeed;
 
-            rb.MovePosition(transform.position + velocity * Time.fixedDeltaTime);
+            // y軸の速度を保持
+            velocity.y = rb.linearVelocity.y;
+
+            rb.linearVelocity = velocity;
         }
         // 階段を登る処理
         private void StairMove()
@@ -531,7 +556,7 @@ namespace MVRP.Player.Models
                 _changeScene.Value = "Clear";
             }
             //  階段エリアにいるときだけ走るのを禁止にする
-            if(collision.gameObject.tag == "InStair")
+            if (collision.gameObject.tag == "InStair")
             {
                 isStair = true;
             }
@@ -546,12 +571,12 @@ namespace MVRP.Player.Models
                 _eventKey.Value = false;
             }
             //  走れるようにする
-            if(other.gameObject.tag == "InStair")
+            if (other.gameObject.tag == "InStair")
             {
                 isStair = false;
             }
         }
-        
+
     }
 }
 

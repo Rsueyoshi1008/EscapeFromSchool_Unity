@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: JumpPower
   m_EditorClassIdentifier: 
   type: JumpPower
-  value: 50
+  value: 4000
