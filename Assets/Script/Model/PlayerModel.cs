@@ -294,14 +294,15 @@ namespace MVRP.Player.Models
                 RaycastHit[] hits = Physics.RaycastAll(ray, movementRayDistance);
                 RaycastHit nearestWallHit = new RaycastHit();
                 float nearestDistance = float.MaxValue;
-                //Rayに当たったオブジェクトの中から一番近いWallを取得
+                
                 foreach (var hit in hits)
                 {
-                    if (hit.collider.gameObject.tag == "Wall")
+                    if (hit.collider.gameObject.tag == "Wall")//    Rayに当たったオブジェクトの中から一番近いWallを取得
                     {
                         float distanceToWall = hit.distance;
                         if (distanceToWall < nearestDistance)
                         {
+                            //  一番近い壁の距離とRayの当たったオブジェクトを取得
                             nearestDistance = distanceToWall;
                             nearestWallHit = hit;
                         }
